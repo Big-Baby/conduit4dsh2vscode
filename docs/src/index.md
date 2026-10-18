@@ -84,4 +84,4 @@ deploy/       本机/远端安装脚本
 
 ## 许可
 
-[MIT](../LICENSE)
+[GPL-3.0](../LICENSE)
