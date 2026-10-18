@@ -1,0 +1,22 @@
+{
+  "name": "conduit4dsh2vscode-workspace",
+  "version": "0.8.0",
+  "private": true,
+  "description": "DeepSeek Harness for VS Code: a transport bridge and an editor client",
+  "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=22.11"
+  },
+  "workspaces": [
+    "protocol",
+    "bridge",
+    "extension"
+  ],
+  "scripts": {
+    "build": "npm run compile -w conduit4dsh2vscode",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "docs": "node scripts/build-docs.mjs",
+    "package": "node scripts/package-vsix.mjs"
+  }
+}

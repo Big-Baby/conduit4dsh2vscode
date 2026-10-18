@@ -1,0 +1,6 @@
+# Bundle patch consumed by `dsh plugin add`.
+- insert:
+    - id: dsh-bridge
+      name: '@conduit4dsh2vscode/bridge'
+      config:
+        transport: stdio

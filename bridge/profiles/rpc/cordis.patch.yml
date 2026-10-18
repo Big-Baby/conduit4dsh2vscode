@@ -1,0 +1,10 @@
+# Mounted on top of dsh-base, replacing the interactive UI with the RPC bridge.
+- insert:
+    - id: dsh-bridge
+      name: '@conduit4dsh2vscode/bridge'
+      config:
+        transport: stdio
+        # transport: tcp
+        # host: 127.0.0.1
+        # port: 4113
+        # token: '${DSH_RPC_TOKEN}'

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概述 · Conduit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --line: #d8dee4;
+  --panel: #f6f8fa;
+  --accent: #0969da;
+  --code-bg: #f6f8fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #9198a1;
+    --line: #30363d;
+    --panel: #151b23;
+    --accent: #4493f8;
+    --code-bg: #161b22;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 260px;
+  flex: none;
+  padding: 28px 20px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand { font-weight: 700; font-size: 17px; letter-spacing: .01em; }
+.brand span { display: block; margin-top: 4px; font-weight: 400; font-size: 12px; color: var(--muted); }
+.nav-group { margin-top: 26px; }
+.nav-group h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-group a {
+  display: block;
+  padding: 5px 10px;
+  margin: 1px 0;
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 14px;
+}
+.nav-group a:hover { background: var(--line); text-decoration: none; }
+.nav-group a.active { background: var(--accent); color: #fff; }
+.content { flex: 1; min-width: 0; padding: 44px 48px 80px; }
+.page { max-width: 880px; margin: 0 auto; }
+.page-meta { color: var(--muted); font-size: 13px; margin-bottom: 26px; }
+h1 { font-size: 30px; line-height: 1.3; margin: 0 0 18px; }
+h2 { font-size: 21px; margin: 38px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 17px; margin: 26px 0 10px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 24px; }
+li { margin: 4px 0; }
+code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font: 0.88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+pre { margin: 0 0 18px; padding: 14px 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+pre code { padding: 0; background: none; font-size: 13px; }
+pre.mermaid { background: var(--panel); text-align: center; border-style: dashed; }
+table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 14px; }
+th, td { padding: 8px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--panel); font-weight: 600; }
+blockquote { margin: 0 0 18px; padding: 6px 16px; border-left: 3px solid var(--line); color: var(--muted); }
+hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; }
+.pager a { max-width: 46%; }
+.pager .next { margin-left: auto; text-align: right; }
+@media (max-width: 900px) {
+  .layout { display: block; }
+  .sidebar { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  .content { padding: 28px 20px 60px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">Conduit<span>DSH to VS Code</span></div>
+    <div class="nav-group"><h2>开始</h2>
+<a href="index.html" class="active">概述</a>
+</div>
+<div class="nav-group"><h2>设计</h2>
+<a href="architecture.html">架构</a>
+<a href="protocol.html">RPC 协议</a>
+</div>
+<div class="nav-group"><h2>实现</h2>
+<a href="bridge.html">网关</a>
+<a href="extension.html">编辑器客户端</a>
+</div>
+<div class="nav-group"><h2>工程</h2>
+<a href="development.html">开发与发布</a>
+</div>
+    <div class="nav-group">
+      <h2>离线版本</h2>
+      <a href="src/index.md">Markdown 源文件</a>
+    </div>
+  </aside>
+  <main class="content">
+    <article class="page">
+      <div class="page-meta">开始 · 协议 1.0 · v0.8.0</div>
+      <h1 id="conduit-dsh-to-vs-code">Conduit · DSH to VS Code</h1>
+<p>DeepSeek Harness 的编辑器前端。它在 dsh 进程内挂载一个 JSON-RPC 传输桥， 再由 VS Code 扩展把项目、会话、模型、多 agent 任务与文件变更呈现到编辑器里。</p>
+<p>与 <code>dsh web</code> 的区别在于链路方向：不经过 HTTP 与浏览器，也不依赖端口转发。 扩展以 <code>extensionKind: workspace</code> 运行，在 Remote-SSH 场景下直接跑在远端， 文件读写与终端操作都在真实工作区完成。</p>
+<h2 id="组成">组成</h2>
+<table><thead><tr><th>包</th><th>角色</th><th>运行位置</th></tr></thead><tbody><tr><td><a href="protocol.html"><code>protocol/</code></a></td><td>通信契约：信封、方法表、DTO、事件、错误码</td><td>编译期，两侧内联</td></tr>
+<tr><td><a href="bridge.html"><code>bridge/</code></a></td><td>dsh 侧网关：把 harness 能力暴露为 JSON-RPC 服务端</td><td>dsh 进程内</td></tr>
+<tr><td><a href="extension.html"><code>extension/</code></a></td><td>编辑器客户端：连接、侧边栏、对话区</td><td>VS Code 扩展宿主</td></tr></tbody></table>
+<p>依赖方向单一：<code>extension → core → rpc</code>，<code>bridge: rpc → core → dsh → store</code>， 两侧都只向下依赖 <code>protocol</code>。</p>
+<h2 id="能力">能力</h2>
+<ul><li><strong>会话</strong>：列表、创建、重命名、归档、删除、历史分页、取消当前轮次</li><li><strong>模型</strong>：供应商增删改查、密钥托管、默认模型、会话内模型与思考强度切换</li><li><strong>多 agent</strong>：子 agent 树、状态、耗时、工具调用计数，对话区按 agent 分组</li><li><strong>文件</strong>：工作区文件列举与读取（越界校验）、<code>@</code> 提及随消息投递</li><li><strong>变更</strong>：以上次确认为基线的 diff，支持逐文件查看、还原与一键推进基线</li><li><strong>插件</strong>：列出、搜索、安装、启停、卸载 dsh bundle</li></ul>
+<h2 id="快速开始">快速开始</h2>
+<p>前置条件：Node.js 22.11+、已安装 dsh（<code>npm i -g @deepseek-ai/dsh</code>）。</p>
+<pre><code class="language-bash"># 1. 安装网关到 rpc profile
+dsh plugin --profile rpc add /absolute/path/to/bridge
+
+# 2. 验证通道
+printf &#39;%s\n&#39; &#39;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;system.info&quot;}&#39; | dsh --profile rpc
+
+# 3. 构建并安装扩展
+npm install
+npm run build
+cd extension &amp;&amp; npm run package
+code --install-extension conduit4dsh2vscode-0.8.0.vsix
+</code></pre>
+<p>也可以在 VS Code 中执行 <code>DSH: Connect</code>，扩展会自动探测 CLI（配置路径 → PATH → npx）。</p>
+<h2 id="配置">配置</h2>
+<table><thead><tr><th>设置</th><th>默认</th><th>说明</th></tr></thead><tbody><tr><td><code>dsh.transport</code></td><td><code>stdio</code></td><td><code>stdio</code> / <code>tcp</code> / <code>unix</code></td></tr>
+<tr><td><code>dsh.profile</code></td><td><code>rpc</code></td><td>连接使用的 profile</td></tr>
+<tr><td><code>dsh.permissionMode</code></td><td><code>workspace-write</code></td><td>沙箱级别，经 <code>DSH_PERMISSION_MODE</code> 传入</td></tr>
+<tr><td><code>dsh.enableLiveAgentLoop</code></td><td><code>true</code></td><td>关闭后回放本地记录，不调用模型</td></tr>
+<tr><td><code>dsh.providerConfig</code></td><td><code>{}</code></td><td>声明式供应商配置，连接后自动同步</td></tr>
+<tr><td><code>dsh.changes.exclude</code></td><td>构建产物等</td><td>变更跟踪忽略的 glob</td></tr>
+<tr><td><code>dsh.ui.*</code></td><td>跟随主题</td><td>对话区配色与折叠偏好</td></tr></tbody></table>
+<p>完整列表见 <a href="extension.html">docs/extension.md</a>。</p>
+<h2 id="文档">文档</h2>
+<ul><li><a href="architecture.html">架构</a>：分层、依赖规则、一次对话的完整链路</li><li><a href="protocol.html">RPC 协议</a>：方法表、事件、错误码、版本与能力协商</li><li><a href="bridge.html">网关</a>：profile 挂载、dsh 适配层、凭据与路由</li><li><a href="extension.html">编辑器客户端</a>：连接状态机、Webview 契约、变更基线</li><li><a href="development.html">开发</a>：构建、测试、部署与排障</li></ul>
+<p><code>docs/*.html</code> 是同一份内容的在线版本，使用 CDN 渲染图表与代码高亮。</p>
+<h2 id="目录">目录</h2>
+<pre><code>protocol/     契约（类型与常量，无运行时依赖）
+bridge/       网关插件（cordis 入口、dsh 适配、RPC 服务）
+extension/    扩展（RPC 客户端、领域服务、视图、Vue 对话区）
+docs/         文档（Markdown 离线版 + HTML 在线版）
+scripts/      文档生成与打包脚本
+deploy/       本机/远端安装脚本
+</code></pre>
+<h2 id="许可">许可</h2>
+<p><a href="https://github.com/conduit4dsh2vscode/conduit4dsh2vscode/blob/main/LICENSE">MIT</a></p>
+      <nav class="pager">
+    <span></span>
+    <a class="next" href="architecture.html">架构 →</a>
+  </nav>
+    </article>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/common.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+  await mermaid.run({ querySelector: '.mermaid' });
+</script>
+</body>
+</html>

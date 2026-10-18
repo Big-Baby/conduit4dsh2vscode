@@ -1,0 +1,614 @@
+{
+  "name": "conduit4dsh2vscode",
+  "displayName": "DSH Conduit for VS Code",
+  "description": "A conduit between DeepSeek Harness and VS Code: sessions, models, multi-agent tasks and change review over a local JSON-RPC bridge.",
+  "version": "0.8.0",
+  "publisher": "conduit4dsh2vscode",
+  "license": "GPL-3.0-only",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "DSH",
+      "properties": {
+        "dsh.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the dsh executable. Empty means auto-detect (PATH, then npx)."
+        },
+        "dsh.home": {
+          "type": "string",
+          "default": "",
+          "description": "Overrides DSH_HOME. Empty means ~/.dsh."
+        },
+        "dsh.profile": {
+          "type": "string",
+          "default": "rpc",
+          "description": "Harness profile used for the connection."
+        },
+        "dsh.transport": {
+          "type": "string",
+          "enum": [
+            "stdio",
+            "tcp",
+            "unix"
+          ],
+          "default": "stdio",
+          "description": "Transport used to reach the bridge."
+        },
+        "dsh.rpcHost": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Host for the tcp transport."
+        },
+        "dsh.rpcPort": {
+          "type": "number",
+          "default": 4113,
+          "description": "Port for the tcp transport."
+        },
+        "dsh.rpcSocketPath": {
+          "type": "string",
+          "default": "",
+          "description": "Socket path for the unix transport."
+        },
+        "dsh.rpcToken": {
+          "type": "string",
+          "default": "",
+          "description": "Shared token for tcp/unix transports."
+        },
+        "dsh.permissionMode": {
+          "type": "string",
+          "enum": [
+            "read-only",
+            "workspace-write",
+            "danger-full-access"
+          ],
+          "default": "workspace-write",
+          "description": "Sandbox level passed to the harness through DSH_PERMISSION_MODE."
+        },
+        "dsh.enableLiveAgentLoop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the harness agent loop. When off, transcripts are replayed locally."
+        },
+        "dsh.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Connect automatically when a workspace is open."
+        },
+        "dsh.autoOpenChat": {
+          "type": "boolean",
+          "default": false,
+          "description": "Open the chat panel after connecting."
+        },
+        "dsh.providerConfig": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Declarative provider catalog, synced on connect and whenever this setting changes.\n\n```json\n{\n  \"providers\": [\n    {\n      \"id\": \"my-gateway\",\n      \"kind\": \"openai\",\n      \"baseURL\": \"https://api.example.com/v1\",\n      \"apiKeyEnv\": \"MY_GATEWAY_KEY\",\n      \"models\": [\"model-a\", \"model-b\"]\n    }\n  ],\n  \"defaultModel\": \"model-a\",\n  \"replace\": false\n}\n```\n\n`apiKeyEnv` is preferred over an inline `apiKey`; the key is stored by the harness credential service, not in settings.json."
+        },
+        "dsh.changes.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Track file changes since the last confirmation."
+        },
+        "dsh.changes.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.dsh/**",
+            "**/dist/**",
+            "**/out/**",
+            "**/build/**"
+          ],
+          "description": "Glob patterns ignored by change tracking."
+        },
+        "dsh.changes.whitelist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Workspace-relative paths that are never recorded as changes.\n\n- `logs/app.log` exact file\n- `tmp` or `tmp/` directory and everything below it\n- `logs/**/*.log` glob"
+        },
+        "dsh.changes.maxFiles": {
+          "type": "number",
+          "default": 2000,
+          "description": "Upper bound on files listed by change tracking."
+        },
+        "dsh.changes.autoCommitOnConfirm": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create a git checkpoint when confirming changes in a repository."
+        },
+        "dsh.ui.accent": {
+          "type": "string",
+          "default": "",
+          "description": "Accent color. Empty follows the active theme."
+        },
+        "dsh.ui.userBubble": {
+          "type": "string",
+          "default": "",
+          "description": "Background of user messages. Empty follows the theme."
+        },
+        "dsh.ui.assistantBubble": {
+          "type": "string",
+          "default": "",
+          "description": "Background of assistant messages. Empty follows the theme."
+        },
+        "dsh.ui.systemText": {
+          "type": "string",
+          "default": "",
+          "description": "Color of secondary text. Empty follows the theme."
+        },
+        "dsh.ui.border": {
+          "type": "string",
+          "default": "",
+          "description": "Card border color. Empty follows the theme."
+        },
+        "dsh.ui.selectionText": {
+          "type": "string",
+          "default": "",
+          "description": "Text color of the selection. Empty follows the theme."
+        },
+        "dsh.ui.selectionBg": {
+          "type": "string",
+          "default": "",
+          "description": "Background of the selection. Empty follows the theme."
+        },
+        "dsh.ui.collapseLongMessages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collapse messages longer than the threshold."
+        },
+        "dsh.ui.collapseThresholdLines": {
+          "type": "number",
+          "default": 14,
+          "description": "Line count that triggers automatic collapsing."
+        },
+        "dsh.ui.collapseReasoning": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collapse reasoning blocks by default."
+        },
+        "dsh.ui.collapseToolResults": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collapse tool call details by default."
+        },
+        "dsh.ui.showTimestamps": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show message timestamps."
+        },
+        "dsh.ui.compact": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reduce spacing and font size."
+        },
+        "dsh.ui.maxWidth": {
+          "type": "number",
+          "default": 860,
+          "description": "Maximum width of the transcript in pixels. 0 means unlimited."
+        }
+      }
+    },
+    "viewsWelcome": [
+      {
+        "view": "dsh-sessions",
+        "contents": "Not connected to DSH.\n[Connect](command:dsh.connect)\n[Install the DSH CLI](command:dsh.installCli)",
+        "when": "!dsh.connected"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dsh",
+          "title": "DSH",
+          "icon": "media/dsh.svg"
+        }
+      ]
+    },
+    "views": {
+      "dsh": [
+        {
+          "id": "dsh-sessions",
+          "name": "Sessions",
+          "type": "tree"
+        },
+        {
+          "id": "dsh-models",
+          "name": "Models",
+          "type": "tree",
+          "when": "dsh.connected"
+        },
+        {
+          "id": "dsh-agents",
+          "name": "Agents",
+          "type": "tree",
+          "when": "dsh.connected && dsh.multiAgent"
+        },
+        {
+          "id": "dsh-changes",
+          "name": "Pending changes",
+          "type": "tree",
+          "when": "dsh.connected"
+        },
+        {
+          "id": "dsh-plugins",
+          "name": "Plugins",
+          "type": "tree",
+          "when": "dsh.connected && dsh.pluginManagement"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dsh.connect",
+        "title": "DSH: Connect",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "dsh.installCli",
+        "title": "DSH: Install CLI",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "dsh.newSession",
+        "title": "DSH: New Session",
+        "icon": "$(add)"
+      },
+      {
+        "command": "dsh.refreshSessions",
+        "title": "DSH: Refresh Sessions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dsh.openSession",
+        "title": "DSH: Open Session",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "dsh.renameSession",
+        "title": "DSH: Rename Session",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "dsh.forkSession",
+        "title": "DSH: Fork Session",
+        "icon": "$(repo-forked)"
+      },
+      {
+        "command": "dsh.archiveSession",
+        "title": "DSH: Archive Session",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "dsh.unarchiveSession",
+        "title": "DSH: Unarchive Session",
+        "icon": "$(inbox)"
+      },
+      {
+        "command": "dsh.copySessionId",
+        "title": "DSH: Copy Session ID",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "dsh.deleteSession",
+        "title": "DSH: Delete Session",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "dsh.refreshModels",
+        "title": "DSH: Refresh Models",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dsh.syncProviderConfig",
+        "title": "DSH: Sync Provider Config",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "dsh.addProvider",
+        "title": "DSH: Add Provider",
+        "icon": "$(add)"
+      },
+      {
+        "command": "dsh.setApiKey",
+        "title": "DSH: Set API Key",
+        "icon": "$(key)"
+      },
+      {
+        "command": "dsh.removeProvider",
+        "title": "DSH: Remove Provider",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "dsh.setDefaultModel",
+        "title": "DSH: Set Default Model",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "dsh.refreshAgents",
+        "title": "DSH: Refresh Agents",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dsh.showAgent",
+        "title": "DSH: Show Agent Details",
+        "icon": "$(info)"
+      },
+      {
+        "command": "dsh.cancelAgent",
+        "title": "DSH: Cancel Agent",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "dsh.confirmChanges",
+        "title": "DSH: Confirm Changes",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "dsh.compareCode",
+        "title": "DSH: Compare Changes",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "dsh.refreshChanges",
+        "title": "DSH: Refresh Changes",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dsh.resetBaseline",
+        "title": "DSH: Reset Change Baseline",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "dsh.addWhitelistFile",
+        "title": "DSH: Exclude File from Change Tracking",
+        "icon": "$(file-add)"
+      },
+      {
+        "command": "dsh.addWhitelistFolder",
+        "title": "DSH: Exclude Folder from Change Tracking",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "dsh.removeWhitelist",
+        "title": "DSH: Remove Change Tracking Exclusions",
+        "icon": "$(close)"
+      },
+      {
+        "command": "dsh.openChange",
+        "title": "DSH: Open Diff",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "dsh.revertChange",
+        "title": "DSH: Revert Change",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "dsh.collapseAll",
+        "title": "DSH: Collapse All Messages",
+        "icon": "$(fold)"
+      },
+      {
+        "command": "dsh.expandAll",
+        "title": "DSH: Expand All Messages",
+        "icon": "$(unfold)"
+      },
+      {
+        "command": "dsh.openUiSettings",
+        "title": "DSH: Open Appearance Settings",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "dsh.refreshPlugins",
+        "title": "DSH: Refresh Plugins",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dsh.installPlugin",
+        "title": "DSH: Install Plugin",
+        "icon": "$(add)"
+      },
+      {
+        "command": "dsh.searchPlugins",
+        "title": "DSH: Search Plugin Registry",
+        "icon": "$(search)"
+      },
+      {
+        "command": "dsh.uninstallPlugin",
+        "title": "DSH: Uninstall Plugin",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "dsh.enablePlugin",
+        "title": "DSH: Enable Plugin",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "dsh.disablePlugin",
+        "title": "DSH: Disable Plugin",
+        "icon": "$(debug-pause)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "dsh.connect",
+          "when": "view =~ /dsh-(sessions|models)/ && !dsh.connected",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.refreshSessions",
+          "when": "view == dsh-sessions",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.newSession",
+          "when": "view == dsh-sessions",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.refreshModels",
+          "when": "view == dsh-models",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.addProvider",
+          "when": "view == dsh-models",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.syncProviderConfig",
+          "when": "view == dsh-models",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.refreshAgents",
+          "when": "view == dsh-agents",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.refreshChanges",
+          "when": "view == dsh-changes",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.confirmChanges",
+          "when": "view == dsh-changes",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.addWhitelistFile",
+          "when": "view == dsh-changes",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.addWhitelistFolder",
+          "when": "view == dsh-changes",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.refreshPlugins",
+          "when": "view == dsh-plugins",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.searchPlugins",
+          "when": "view == dsh-plugins",
+          "group": "navigation"
+        },
+        {
+          "command": "dsh.installPlugin",
+          "when": "view == dsh-plugins",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "dsh.openSession",
+          "when": "view == dsh-sessions && viewItem == session",
+          "group": "inline"
+        },
+        {
+          "command": "dsh.renameSession",
+          "when": "view == dsh-sessions && viewItem == session",
+          "group": "1_modification"
+        },
+        {
+          "command": "dsh.forkSession",
+          "when": "view == dsh-sessions && viewItem == session",
+          "group": "1_modification"
+        },
+        {
+          "command": "dsh.archiveSession",
+          "when": "view == dsh-sessions && viewItem == session",
+          "group": "2_custom"
+        },
+        {
+          "command": "dsh.deleteSession",
+          "when": "view == dsh-sessions && viewItem == session",
+          "group": "2_custom"
+        },
+        {
+          "command": "dsh.setApiKey",
+          "when": "view == dsh-models && viewItem == provider",
+          "group": "inline"
+        },
+        {
+          "command": "dsh.removeProvider",
+          "when": "view == dsh-models && viewItem == provider",
+          "group": "1_modification"
+        },
+        {
+          "command": "dsh.setDefaultModel",
+          "when": "view == dsh-models && viewItem == model",
+          "group": "inline"
+        },
+        {
+          "command": "dsh.showAgent",
+          "when": "view == dsh-agents",
+          "group": "inline"
+        },
+        {
+          "command": "dsh.cancelAgent",
+          "when": "view == dsh-agents && viewItem == agent-running",
+          "group": "1_modification"
+        },
+        {
+          "command": "dsh.openChange",
+          "when": "view == dsh-changes && viewItem == change",
+          "group": "inline"
+        },
+        {
+          "command": "dsh.revertChange",
+          "when": "view == dsh-changes && viewItem == change",
+          "group": "1_modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node esbuild.mjs && vite build --config vite.config.mts",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "webview:typecheck": "vue-tsc -p src/views/chat/tsconfig.json --noEmit",
+    "webview:test": "vitest run",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vscode/vsce": "^3.2.1",
+    "@vue/test-utils": "^2.5.1",
+    "@vue/tsconfig": "^0.7.0",
+    "esbuild": "^0.24.0",
+    "happy-dom": "^21.0.3",
+    "typescript": "^5.6.0",
+    "vite": "^7.3.7",
+    "vitest": "^5.0.5",
+    "vue": "^3.5.44",
+    "vue-tsc": "^2.2.12"
+  }
+}

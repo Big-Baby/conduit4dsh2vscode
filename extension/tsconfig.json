@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "verbatimModuleSyntax": false,
+    "lib": ["ES2022"],
+    "types": ["node", "vscode"],
+    "baseUrl": ".",
+    "paths": {
+      "@conduit4dsh2vscode/protocol": ["../protocol/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/views/chat"]
+}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网关 · Conduit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --line: #d8dee4;
+  --panel: #f6f8fa;
+  --accent: #0969da;
+  --code-bg: #f6f8fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #9198a1;
+    --line: #30363d;
+    --panel: #151b23;
+    --accent: #4493f8;
+    --code-bg: #161b22;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 260px;
+  flex: none;
+  padding: 28px 20px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand { font-weight: 700; font-size: 17px; letter-spacing: .01em; }
+.brand span { display: block; margin-top: 4px; font-weight: 400; font-size: 12px; color: var(--muted); }
+.nav-group { margin-top: 26px; }
+.nav-group h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-group a {
+  display: block;
+  padding: 5px 10px;
+  margin: 1px 0;
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 14px;
+}
+.nav-group a:hover { background: var(--line); text-decoration: none; }
+.nav-group a.active { background: var(--accent); color: #fff; }
+.content { flex: 1; min-width: 0; padding: 44px 48px 80px; }
+.page { max-width: 880px; margin: 0 auto; }
+.page-meta { color: var(--muted); font-size: 13px; margin-bottom: 26px; }
+h1 { font-size: 30px; line-height: 1.3; margin: 0 0 18px; }
+h2 { font-size: 21px; margin: 38px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 17px; margin: 26px 0 10px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 24px; }
+li { margin: 4px 0; }
+code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font: 0.88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+pre { margin: 0 0 18px; padding: 14px 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+pre code { padding: 0; background: none; font-size: 13px; }
+pre.mermaid { background: var(--panel); text-align: center; border-style: dashed; }
+table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 14px; }
+th, td { padding: 8px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--panel); font-weight: 600; }
+blockquote { margin: 0 0 18px; padding: 6px 16px; border-left: 3px solid var(--line); color: var(--muted); }
+hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; }
+.pager a { max-width: 46%; }
+.pager .next { margin-left: auto; text-align: right; }
+@media (max-width: 900px) {
+  .layout { display: block; }
+  .sidebar { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  .content { padding: 28px 20px 60px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">Conduit<span>DSH to VS Code</span></div>
+    <div class="nav-group"><h2>开始</h2>
+<a href="index.html">概述</a>
+</div>
+<div class="nav-group"><h2>设计</h2>
+<a href="architecture.html">架构</a>
+<a href="protocol.html">RPC 协议</a>
+</div>
+<div class="nav-group"><h2>实现</h2>
+<a href="bridge.html" class="active">网关</a>
+<a href="extension.html">编辑器客户端</a>
+</div>
+<div class="nav-group"><h2>工程</h2>
+<a href="development.html">开发与发布</a>
+</div>
+    <div class="nav-group">
+      <h2>离线版本</h2>
+      <a href="src/bridge.md">Markdown 源文件</a>
+    </div>
+  </aside>
+  <main class="content">
+    <article class="page">
+      <div class="page-meta">实现 · 协议 1.0 · v0.8.0</div>
+      <h1 id="网关-bridge">网关（bridge）</h1>
+<p><code>@conduit4dsh2vscode/bridge</code> 是挂载在 dsh 进程内的 cordis 插件。它不渲染界面， 只把 harness 能力转换为 JSON-RPC 服务。</p>
+<h2 id="插件形态">插件形态</h2>
+<pre><code class="language-yaml"># cordis.patch.yml
+- insert:
+    - id: dsh-bridge
+      name: &#39;@conduit4dsh2vscode/bridge&#39;
+      config:
+        transport: stdio
+</code></pre>
+<p>四导出约定：<code>name</code>、<code>inject</code>、<code>Config</code>、<code>apply</code>。</p>
+<ul><li><code>inject: [&#39;sessions&#39;]</code>：没有会话服务时插件不应挂载；</li><li><code>Config</code> 由 schemastery 定义，<code>transport</code> 支持 <code>stdio</code> / <code>tcp</code> / <code>unix</code>；</li><li><code>apply</code> 只做两件事：构造 <code>BridgeRuntime</code>，用 <code>ctx.effect</code> 绑定启停。</li></ul>
+<p>安装：</p>
+<pre><code class="language-bash">dsh plugin --profile rpc add /absolute/path/to/bridge
+</code></pre>
+<p>profile 会把插件链接到 <code>$DSH_HOME/profiles/rpc</code>，因此<strong>源码更新后无需重新注册</strong>， 覆盖 <code>lib/</code> 即可（<code>node_modules</code> 保留）。</p>
+<h2 id="装配顺序">装配顺序</h2>
+<pre class="mermaid">flowchart TD
+  A[&quot;apply(ctx, config)&quot;] --&gt; B[&quot;BridgeRuntime.create&quot;]
+  B --&gt; C[&quot;paths + legacy migration&quot;]
+  B --&gt; D[&quot;Harness 探测&quot;]
+  B --&gt; E[&quot;LiveBackend.init&quot;]
+  E --&gt;|失败| F[&quot;回退 ReplayBackend&quot;]
+  E --&gt;|成功| G[&quot;订阅 agent 事件&quot;]
+  B --&gt; H[&quot;core 服务 + handler 表&quot;]
+  B --&gt; I[&quot;RpcServer&quot;]
+  A --&gt; J[&quot;ctx.effect → server.start()&quot;]
+  J --&gt; K[&quot;scheduleStartupSync (setTimeout 0)&quot;]</pre>
+<p>启动同步必须延后到 <code>apply</code> 返回之后：它会写 dsh 配置，而配置重载会等待所有 插件 fiber 激活，包括当前这个 fiber。提前同步会自我等待并卡死首次请求。 占位则在启动时立即建立，RPC 写入会排队等待它完成，避免两者争同一把 profile 写锁。</p>
+<h2 id="dsh-适配层">dsh 适配层</h2>
+<p><code>src/dsh/</code> 是唯一直接接触 harness 的目录。对外只暴露结构化类型，因此 harness 升级时改动局限在这一层。</p>
+<table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody><tr><td><code>context.ts</code></td><td>服务探测（agents / sessions / sessionQuery / credentials / settings / pluginManager），缺失即降级</td></tr>
+<tr><td><code>agents.ts</code>（由 <code>runtime/live-backend.ts</code> 消费）</td><td>create / resume / followup / cancel，注入模型选择</td></tr>
+<tr><td><code>session-log.ts</code></td><td>直读 <code>$DSH_HOME/sessions/*/&lt;id&gt;/session.v*.jsonl[.zstd]</code></td></tr>
+<tr><td><code>messages.ts</code></td><td><code>createUserMessage</code> 解析、surface 事件重建消息、429 文案</td></tr>
+<tr><td><code>plugins.ts</code></td><td>pluginManager 门面与 registry 搜索</td></tr>
+<tr><td><code>module-loader.ts</code></td><td>从 CLI 入口反推 dsh 包位置</td></tr></tbody></table>
+<h3 id="会话内容为什么有两个来源">会话内容为什么有两个来源</h3>
+<p><code>ctx.sessionQuery.readSession()</code> 是首选。但它在部分 profile 装配下不可用 （<code>rpc-live.log</code> 会记录 <code>sessionQuery=false</code>），只依赖它会导致重开面板后历史为空。 因此读取失败或为空时，直接解析会话日志。日志是多帧 zstd：</p>
+<ul><li>每次 append 是一帧，<code>zstdDecompressSync</code> 只解第一帧；</li><li>崩溃可能留下截断帧，逐帧解压并跳过坏帧；</li><li>首行 <code>{&quot;type&quot;:&quot;session&quot;}</code> 是文件头，需要剔除。</li></ul>
+<h2 id="模型与凭据">模型与凭据</h2>
+<h3 id="provider-目录">provider 目录</h3>
+<p>存储在 <code>$DSH_HOME/bridge-providers.json</code>。<code>model.providers.add</code> 与 <code>model.providers.sync</code> 都会把目录写入 harness 的 <code>llm-pi-ai</code> settings：</p>
+<pre><code class="language-json">{
+  &quot;providers&quot;: {
+    &quot;my-gateway&quot;: {
+      &quot;displayName&quot;: &quot;my-gateway&quot;,
+      &quot;baseURL&quot;: &quot;https://api.example.com/v1&quot;,
+      &quot;api&quot;: &quot;openai-completions&quot;,
+      &quot;apiKeyEnv&quot;: &quot;DSH_RPC_KEY_MY_GATEWAY&quot;,
+      &quot;retryPolicy&quot;: { &quot;maxRetries&quot;: 6, &quot;backoff&quot;: { &quot;initialDelayMs&quot;: 2000, &quot;maxDelayMs&quot;: 60000 } },
+      &quot;models&quot;: [{ &quot;id&quot;: &quot;model-a&quot;, &quot;name&quot;: &quot;model-a&quot; }]
+    }
+  }
+}
+</code></pre>
+<p><code>api</code> 由 kind 推导：包含 <code>anthropic</code> / <code>claude</code> 时为 <code>anthropic-messages</code>， 否则为 <code>openai-completions</code>。</p>
+<h3 id="密钥">密钥</h3>
+<p>密钥写入 dsh 的 credentials 服务，ref 为 <code>DSH_RPC_KEY_&lt;PROVIDER_ID&gt;</code>（非法字符 折叠为 <code>_</code> 并大写）。settings 中只保存引用名。</p>
+<p>凭据服务不可用时的降级顺序：</p>
+<ol><li>写入进程环境变量（当前进程有效）；</li><li>启动时把旧版 <code>ref = providerId</code> 的密钥迁移到新命名；</li><li>若环境变量由启动环境只读导出，视为已生效。</li></ol>
+<h3 id="重试策略">重试策略</h3>
+<p>每个路由都写入 <code>retryPolicy</code>：6 次、2s 起、上限 60s、25% 抖动。默认策略对 配额型 429 太短，而且 <code>Retry-After</code> 超过上限时会直接放弃重试。</p>
+<h2 id="持久化">持久化</h2>
+<table><thead><tr><th>文件</th><th>内容</th></tr></thead><tbody><tr><td><code>bridge-projects.json</code></td><td>项目注册表</td></tr>
+<tr><td><code>bridge-sessions.json</code></td><td>会话元数据（projectId / title / archived）</td></tr>
+<tr><td><code>bridge-messages/&lt;id&gt;.jsonl</code></td><td>replay 后端的消息</td></tr>
+<tr><td><code>bridge-providers.json</code></td><td>provider 目录</td></tr>
+<tr><td><code>bridge-default-model.json</code></td><td>全局默认模型与思考强度</td></tr>
+<tr><td><code>bridge-config.json</code></td><td><code>config.set</code> 的自由配置</td></tr>
+<tr><td><code>bridge-agents/&lt;id&gt;.json</code></td><td>agent 登记表</td></tr>
+<tr><td><code>bridge.log</code></td><td>诊断日志（上限 2 MiB）</td></tr></tbody></table>
+<p>写入采用临时文件 + rename；Windows 上 rename 失败时回退为原地写。 首次启动会把旧版的 <code>rpc-*.json</code> 迁移到新文件名，避免升级丢状态。</p>
+<h2 id="事件到协议的映射">事件到协议的映射</h2>
+<table><thead><tr><th>harness 事件</th><th>协议事件</th></tr></thead><tbody><tr><td><code>agent/assistant-stream</code> + <code>text-delta</code></td><td><code>text.delta</code></td></tr>
+<tr><td><code>agent/assistant-stream</code> + <code>reasoning-delta</code></td><td><code>reasoning.delta</code></td></tr>
+<tr><td><code>agent/assistant-stream</code> + <code>tool-call-delta</code></td><td><code>tool.call</code>（参数跨片累积）</td></tr>
+<tr><td><code>agent/assistant-stream</code> + <code>finish</code></td><td>仅清理参数缓冲，不发事件</td></tr>
+<tr><td><code>agent/status</code> → idle/completed</td><td><code>assistant.message</code>（整轮文本）+ <code>agent.status</code></td></tr>
+<tr><td><code>agent/created</code></td><td><code>agent.spawn</code>（成功状态映射为 pending）</td></tr>
+<tr><td><code>agent/disposed</code></td><td><code>agent.result</code></td></tr>
+<tr><td><code>agent/error</code> / <code>agent/request-error</code></td><td><code>error</code></td></tr></tbody></table>
+<p>用户主动取消后，harness 会把状态置回 idle，不会单独报 cancelled。网关记录取消 意图，在终止事件到达时改写为 <code>cancelled</code>，避免界面误报“已完成”。</p>
+<h2 id="限制">限制</h2>
+<ul><li><code>session.fork</code> 仅在 replay 后端可用；</li><li>live 模式下子 agent 的归属依赖“当前运行中的主会话”，并行运行多个会话时</li></ul>
+<p>  子 agent 可能挂到最先运行的那个；</p>
+<ul><li>插件搜索走 registry HTTP 接口，企业内网需要可访问 registry。</li></ul>
+      <nav class="pager">
+    <a class="prev" href="protocol.html">← RPC 协议</a>
+    <a class="next" href="extension.html">编辑器客户端 →</a>
+  </nav>
+    </article>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/common.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+  await mermaid.run({ querySelector: '.mermaid' });
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "name": "@conduit4dsh2vscode/bridge",
+  "version": "0.8.0",
+  "description": "DSH transport bridge: exposes harness capabilities over JSON-RPC 2.0",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "profiles",
+    "cordis.yml",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=2.0.0",
+    "@deepseek-ai/dsh": ">=0.2.0-rc.0 <0.3.0",
+    "@deepseek-ai/schemastery": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh": { "optional": true },
+    "@deepseek-ai/schemastery": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

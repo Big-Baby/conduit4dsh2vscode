@@ -1,0 +1,8 @@
+src/**
+tsconfig.json
+vite.config.mts
+vitest.config.mts
+esbuild.mjs
+README.md
+**/*.map
+**/*.spec.ts

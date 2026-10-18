@@ -1,0 +1,17 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@conduit4dsh2vscode/protocol": ["../../protocol/src/index.ts"]
+    }
+  },
+  "include": ["./**/*.ts", "./**/*.vue"],
+  "exclude": ["node_modules"]
+}

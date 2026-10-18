@@ -1,0 +1,2 @@
+# Local development entry point for the bridge plugin.
+- name: ./src/index.ts

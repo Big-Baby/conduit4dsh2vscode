@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@conduit4dsh2vscode/protocol": ["../protocol/src/index.ts"]
+    }
+  },
+  "include": ["src", "stubs"]
+}

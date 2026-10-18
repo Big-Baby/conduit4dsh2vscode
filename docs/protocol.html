@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPC 协议 · Conduit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --line: #d8dee4;
+  --panel: #f6f8fa;
+  --accent: #0969da;
+  --code-bg: #f6f8fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #9198a1;
+    --line: #30363d;
+    --panel: #151b23;
+    --accent: #4493f8;
+    --code-bg: #161b22;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 260px;
+  flex: none;
+  padding: 28px 20px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand { font-weight: 700; font-size: 17px; letter-spacing: .01em; }
+.brand span { display: block; margin-top: 4px; font-weight: 400; font-size: 12px; color: var(--muted); }
+.nav-group { margin-top: 26px; }
+.nav-group h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-group a {
+  display: block;
+  padding: 5px 10px;
+  margin: 1px 0;
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 14px;
+}
+.nav-group a:hover { background: var(--line); text-decoration: none; }
+.nav-group a.active { background: var(--accent); color: #fff; }
+.content { flex: 1; min-width: 0; padding: 44px 48px 80px; }
+.page { max-width: 880px; margin: 0 auto; }
+.page-meta { color: var(--muted); font-size: 13px; margin-bottom: 26px; }
+h1 { font-size: 30px; line-height: 1.3; margin: 0 0 18px; }
+h2 { font-size: 21px; margin: 38px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 17px; margin: 26px 0 10px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 24px; }
+li { margin: 4px 0; }
+code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font: 0.88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+pre { margin: 0 0 18px; padding: 14px 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+pre code { padding: 0; background: none; font-size: 13px; }
+pre.mermaid { background: var(--panel); text-align: center; border-style: dashed; }
+table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 14px; }
+th, td { padding: 8px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--panel); font-weight: 600; }
+blockquote { margin: 0 0 18px; padding: 6px 16px; border-left: 3px solid var(--line); color: var(--muted); }
+hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; }
+.pager a { max-width: 46%; }
+.pager .next { margin-left: auto; text-align: right; }
+@media (max-width: 900px) {
+  .layout { display: block; }
+  .sidebar { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  .content { padding: 28px 20px 60px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">Conduit<span>DSH to VS Code</span></div>
+    <div class="nav-group"><h2>开始</h2>
+<a href="index.html">概述</a>
+</div>
+<div class="nav-group"><h2>设计</h2>
+<a href="architecture.html">架构</a>
+<a href="protocol.html" class="active">RPC 协议</a>
+</div>
+<div class="nav-group"><h2>实现</h2>
+<a href="bridge.html">网关</a>
+<a href="extension.html">编辑器客户端</a>
+</div>
+<div class="nav-group"><h2>工程</h2>
+<a href="development.html">开发与发布</a>
+</div>
+    <div class="nav-group">
+      <h2>离线版本</h2>
+      <a href="src/protocol.md">Markdown 源文件</a>
+    </div>
+  </aside>
+  <main class="content">
+    <article class="page">
+      <div class="page-meta">设计 · 协议 1.0 · v0.8.0</div>
+      <h1 id="rpc-协议">RPC 协议</h1>
+<p>协议版本 <strong>1.0</strong>。传输为 JSON-RPC 2.0，帧格式为 NDJSON：一行一条消息，UTF-8， 单帧上限 16 MiB。</p>
+<h2 id="信封">信封</h2>
+<pre><code class="language-json">{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;session.list&quot;,&quot;params&quot;:{&quot;projectId&quot;:&quot;p_...&quot;}}
+{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;result&quot;:[]}
+{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;error&quot;:{&quot;code&quot;:-32011,&quot;message&quot;:&quot;session not found: s_...&quot;}}
+{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;session.event&quot;,&quot;params&quot;:{&quot;sessionId&quot;:&quot;s_...&quot;,&quot;event&quot;:{}}}
+</code></pre>
+<ul><li>请求必须有 <code>id</code>；通知没有 <code>id</code>，服务端不回复。</li><li>客户端到服务端的通知只有 <code>session.subscribe</code> / <code>session.unsubscribe</code>。</li><li>批量请求不支持；一行一条消息。</li></ul>
+<h2 id="版本与能力">版本与能力</h2>
+<p><code>system.info</code> 返回 <code>protocolVersion</code> 与 <code>capabilities</code>。兼容规则：</p>
+<ol><li>主版本不同 → 客户端拒绝连接（<code>-32002</code>）；</li><li>次版本不同 → 按 <code>capabilities</code> 降级，不阻断。</li></ol>
+<p>当前能力：<code>multi-agent</code>、<code>changes-baseline</code>、<code>plugin-management</code>、 <code>file-mentions</code>、<code>history-paging</code>、<code>session-model-selection</code>。</p>
+<h2 id="错误码">错误码</h2>
+<table><thead><tr><th>码</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td>-32700</td><td>ParseError</td><td>帧不是合法 JSON</td></tr>
+<tr><td>-32600</td><td>InvalidRequest</td><td>信封不合法</td></tr>
+<tr><td>-32601</td><td>MethodNotFound</td><td>方法不存在</td></tr>
+<tr><td>-32602</td><td>InvalidParams</td><td>参数缺失或类型错误</td></tr>
+<tr><td>-32603</td><td>InternalError</td><td>未分类失败</td></tr>
+<tr><td>-32000</td><td>ServerNotReady</td><td>依赖服务未激活</td></tr>
+<tr><td>-32001</td><td>AuthFailed</td><td>鉴权失败</td></tr>
+<tr><td>-32002</td><td>ProtocolMismatch</td><td>主版本不一致</td></tr>
+<tr><td>-32003</td><td>RequestCancelled</td><td>超时或主动取消</td></tr>
+<tr><td>-32010</td><td>ProjectNotFound</td><td>项目不存在</td></tr>
+<tr><td>-32011</td><td>SessionNotFound</td><td>会话不存在</td></tr>
+<tr><td>-32012</td><td>SessionBusy</td><td>会话正在运行</td></tr>
+<tr><td>-32013</td><td>MessageNotFound</td><td>消息游标不存在</td></tr>
+<tr><td>-32020</td><td>ProviderNotFound</td><td>供应商不存在</td></tr>
+<tr><td>-32021</td><td>ModelNotFound</td><td>模型不存在</td></tr>
+<tr><td>-32022</td><td>ProviderExists</td><td>供应商 id 冲突</td></tr>
+<tr><td>-32030</td><td>PathOutsideWorkspace</td><td>路径越界</td></tr>
+<tr><td>-32031</td><td>FileTooLarge</td><td>文件超过 8 MiB</td></tr>
+<tr><td>-32040</td><td>DshApiMismatch</td><td>harness 版本不兼容</td></tr>
+<tr><td>-32050</td><td>AgentNotFound</td><td>agent 不存在</td></tr>
+<tr><td>-32060</td><td>PluginNotFound</td><td>插件不存在</td></tr>
+<tr><td>-32061</td><td>PluginInstallFailed</td><td>安装失败</td></tr>
+<tr><td>-32062</td><td>RegistryUnavailable</td><td>仓库不可达</td></tr></tbody></table>
+<h2 id="方法表">方法表</h2>
+<h3 id="system">system</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>system.ping</code></td><td>—</td><td><code>{pong:true}</code></td></tr>
+<tr><td><code>system.info</code></td><td>—</td><td><code>ServerInfo</code></td></tr>
+<tr><td><code>system.shutdown</code></td><td>—</td><td><code>{ok, mode}</code></td></tr></tbody></table>
+<p><code>ServerInfo</code>：<code>{protocolVersion, dshVersion, profile, transports, pid, capabilities, mode}</code>。 <code>mode</code> 为 <code>live</code> 或 <code>replay</code>。</p>
+<h3 id="workspace-project">workspace / project</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>workspace.list</code></td><td>—</td><td><code>{id,name,path}[]</code></td></tr>
+<tr><td><code>project.list</code></td><td>—</td><td><code>ProjectInfo[]</code></td></tr>
+<tr><td><code>project.ensure</code></td><td><code>{name,path}</code></td><td><code>ProjectInfo</code></td></tr>
+<tr><td><code>project.remove</code></td><td><code>{projectId}</code></td><td><code>{ok}</code></td></tr></tbody></table>
+<p><code>project.ensure</code> 以路径为准；同路径重复调用不会创建第二个项目。</p>
+<h3 id="session">session</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>session.list</code></td><td><code>{projectId?,includeArchived?}</code></td><td><code>SessionInfo[]</code></td></tr>
+<tr><td><code>session.get</code></td><td><code>{sessionId}</code></td><td><code>{session,messages}</code></td></tr>
+<tr><td><code>session.history</code></td><td><code>{sessionId,before?,limit?}</code></td><td><code>{messages,hasMore,total}</code></td></tr>
+<tr><td><code>session.create</code></td><td><code>{projectId,title?}</code></td><td><code>SessionInfo</code></td></tr>
+<tr><td><code>session.append</code></td><td><code>{sessionId,content,attachments?}</code></td><td><code>{messageId,status}</code></td></tr>
+<tr><td><code>session.cancel</code></td><td><code>{sessionId}</code></td><td><code>{ok}</code></td></tr>
+<tr><td><code>session.rename</code></td><td><code>{sessionId,title}</code></td><td><code>{ok}</code></td></tr>
+<tr><td><code>session.fork</code></td><td><code>{sessionId,fromMessageId?}</code></td><td><code>SessionInfo</code></td></tr>
+<tr><td><code>session.archive</code> / <code>session.unarchive</code></td><td><code>{sessionId}</code></td><td><code>{ok}</code></td></tr>
+<tr><td><code>session.delete</code></td><td><code>{sessionId}</code></td><td><code>{ok}</code></td></tr></tbody></table>
+<p><strong>分页语义</strong>：<code>before</code> 是客户端已加载的最早一条消息 id；返回它之前的 <code>limit</code> 条（默认 30，上限 200）。省略 <code>before</code> 表示从最新往回取一页。 返回 <code>hasMore=false</code> 或空页时客户端停止翻页。</p>
+<p><strong>附件语义</strong>：<code>attachments</code> 为 <code>{kind:&#39;file&#39;, path, name?}[]</code>。<code>path</code> 必须 是工作区内的绝对路径，服务端会做越界校验。live 模式下文件被投影为 harness 的 FileBlock；附件服务不可用时退化为带截断的文本内联。</p>
+<p><strong>fork 限制</strong>：harness 没有分支原语，<code>session.fork</code> 只在 replay 后端可用； live 模式返回 <code>-32000</code> 并说明原因。</p>
+<h3 id="model">model</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>model.providers.list</code></td><td>—</td><td><code>ProviderInfo[]</code></td></tr>
+<tr><td><code>model.providers.add</code></td><td><code>{kind,id?,baseURL?,apiKey?,models?}</code></td><td><code>ProviderInfo</code></td></tr>
+<tr><td><code>model.providers.sync</code></td><td><code>{providers?,replace?,defaultModel?}</code></td><td><code>{providers,models,defaultModel?,warnings}</code></td></tr>
+<tr><td><code>model.providers.setKey</code></td><td><code>{providerId,apiKey}</code></td><td><code>{ok}</code></td></tr>
+<tr><td><code>model.providers.remove</code></td><td><code>{providerId}</code></td><td><code>{ok}</code></td></tr>
+<tr><td><code>model.list</code></td><td><code>{providerId?}</code></td><td><code>ModelInfo[]</code></td></tr>
+<tr><td><code>model.getDefault</code></td><td>—</td><td><code>{modelId?,effort?}</code></td></tr>
+<tr><td><code>model.setDefault</code></td><td><code>{modelId,sessionId?,effort?}</code></td><td><code>{ok}</code></td></tr></tbody></table>
+<p><code>model.setDefault</code> 的三种效果：</p>
+<ol><li>持久化全局默认模型，影响之后创建或恢复的 agent；</li><li>带 <code>effort</code> 时更新全局思考强度；</li><li>带 <code>sessionId</code> 时，立即作用于该会话已创建 agent 的<strong>下一轮</strong>请求</li></ol>
+<p>   （通过可变 model selection，无需重建 agent）。</p>
+<p>密钥永不回传。<code>hasKey</code> 只表示“可用凭据存在”。</p>
+<h3 id="agent">agent</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>agent.list</code></td><td><code>{sessionId}</code></td><td><code>AgentInfo[]</code></td></tr>
+<tr><td><code>agent.tree</code></td><td><code>{sessionId}</code></td><td><code>AgentNode[]</code></td></tr>
+<tr><td><code>agent.get</code></td><td><code>{sessionId,agentId}</code></td><td><code>AgentInfo</code></td></tr>
+<tr><td><code>agent.cancel</code></td><td><code>{sessionId,agentId}</code></td><td><code>{ok}</code></td></tr></tbody></table>
+<p><code>AgentNode</code> 是 <code>AgentInfo</code> 加 <code>children</code>。主 agent 的 id 固定为 <code>root</code>； 父节点缺失的子 agent 会挂到 root 下，界面始终只有一棵树。</p>
+<h3 id="file">file</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>file.list</code></td><td><code>{query?,maxFiles?}</code></td><td><code>{files,truncated}</code></td></tr>
+<tr><td><code>file.readText</code></td><td><code>{path}</code></td><td><code>{path,content}</code></td></tr>
+<tr><td><code>file.stat</code></td><td><code>{path}</code></td><td><code>{path,size,mtime,isDirectory}</code></td></tr></tbody></table>
+<p><code>file.list</code> 遍历已注册工作区，跳过 VCS、依赖与缓存目录（<code>.git</code>、<code>node_modules</code>、 <code>dist</code> 等）、符号链接与超过 12 层的目录，默认上限 5000 个文件。</p>
+<h3 id="plugin">plugin</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>plugin.list</code></td><td>—</td><td><code>{plugins,bundles}</code></td></tr>
+<tr><td><code>plugin.registry.search</code></td><td><code>{query,size?}</code></td><td><code>{registry,results,error?}</code></td></tr>
+<tr><td><code>plugin.registry.inspect</code></td><td><code>{spec}</code></td><td><code>{status,...}</code></td></tr>
+<tr><td><code>plugin.install</code></td><td><code>{spec}</code></td><td><code>{requestId}</code></td></tr>
+<tr><td><code>plugin.install.cancel</code></td><td><code>{requestId}</code></td><td><code>{status}</code></td></tr>
+<tr><td><code>plugin.uninstall</code></td><td><code>{name}</code></td><td><code>PluginChangeResult</code></td></tr>
+<tr><td><code>plugin.setEnabled</code></td><td><code>{kind,id,enabled}</code></td><td><code>PluginChangeResult</code></td></tr></tbody></table>
+<p>安装是异步的：立即返回 <code>requestId</code>，进度经 <code>plugin.event</code> 推送。</p>
+<h3 id="config">config</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>config.get</code></td><td><code>{keys?}</code></td><td><code>Record&lt;string,unknown&gt;</code></td></tr>
+<tr><td><code>config.set</code></td><td><code>{patch}</code></td><td><code>{ok,applied,config}</code></td></tr></tbody></table>
+<h2 id="通知">通知</h2>
+<table><thead><tr><th>方法</th><th>载荷</th><th>范围</th></tr></thead><tbody><tr><td><code>session.event</code></td><td><code>{sessionId,event}</code></td><td>按会话订阅</td></tr>
+<tr><td><code>session.status</code></td><td><code>{sessionId,status}</code></td><td>按会话订阅</td></tr>
+<tr><td><code>agent.event</code></td><td><code>{sessionId,agent}</code></td><td>按会话订阅</td></tr>
+<tr><td><code>model.changed</code></td><td><code>{providerId?,modelId?}</code></td><td>全局</td></tr>
+<tr><td><code>plugin.event</code></td><td><code>PluginEventParams</code></td><td>全局</td></tr>
+<tr><td><code>system.shutting-down</code></td><td><code>{reason,clientId?}</code></td><td>全局</td></tr></tbody></table>
+<p>stdio 只有一个客户端，全部下发。tcp/unix 下带 <code>sessionId</code> 的通知只发给 订阅了该会话的连接。</p>
+<h3 id="sessionevent">SessionEvent</h3>
+<pre><code class="language-ts">{
+  id: string
+  seq: number
+  ts: string
+  type:
+    | &#39;user.message&#39; | &#39;assistant.message&#39;
+    | &#39;text.delta&#39; | &#39;reasoning.delta&#39;
+    | &#39;tool.call&#39; | &#39;tool.result&#39;
+    | &#39;context.inject&#39; | &#39;error&#39;
+    | &#39;agent.spawn&#39; | &#39;agent.status&#39; | &#39;agent.result&#39;
+  role?: &#39;user&#39; | &#39;assistant&#39; | &#39;system&#39; | &#39;tool&#39;
+  text?: string
+  tool?: { id, name, args, status, result?, durationMs? }
+  agent?: { id, parentId?, name?, kind?, status?, task? }
+}
+</code></pre>
+<p><code>agent</code> 缺省表示主 agent。<code>text.delta</code> 与 <code>reasoning.delta</code> 是增量； <code>assistant.message</code> 是一轮的完整文本，客户端应以它为准做最终回填。</p>
+<h2 id="鉴权">鉴权</h2>
+<ul><li><code>stdio</code>：进程由客户端创建，视为已认证。</li><li><code>tcp</code> / <code>unix</code>：必须配置 <code>token</code>，首条请求为</li></ul>
+<p>  <code>{&quot;method&quot;:&quot;auth&quot;,&quot;params&quot;:{&quot;token&quot;:&quot;...&quot;}}</code>；失败返回 <code>-32001</code> 并保持未认证状态。</p>
+<p>token 比较使用 <code>timingSafeEqual</code>；长度不同直接失败。</p>
+<h2 id="订阅">订阅</h2>
+<pre><code class="language-json">{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;session.subscribe&quot;,&quot;params&quot;:{&quot;sessionId&quot;:&quot;s_...&quot;}}
+{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;session.unsubscribe&quot;,&quot;params&quot;:{&quot;sessionId&quot;:&quot;s_...&quot;}}
+</code></pre>
+<p>订阅是连接级状态，重连后客户端需要重新发送。stdio 下订阅无副作用，但保留 同一套语义，便于客户端只实现一条路径。</p>
+<h2 id="兼容性检查清单">兼容性检查清单</h2>
+<p>新增方法时：</p>
+<ol><li><code>protocol/src/methods.ts</code> 加入 <code>MethodMap</code>；</li><li>实现对应 handler（类型缺失会编译失败）；</li><li><code>CAPABILITIES</code> 增加能力名（若客户端需要降级）；</li><li>更新本文件与 <code>docs/protocol.html</code>；</li><li>只在主版本变化时改变既有字段语义。</li></ol>
+      <nav class="pager">
+    <a class="prev" href="architecture.html">← 架构</a>
+    <a class="next" href="bridge.html">网关 →</a>
+  </nav>
+    </article>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/common.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+  await mermaid.run({ querySelector: '.mermaid' });
+</script>
+</body>
+</html>
