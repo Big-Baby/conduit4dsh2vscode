@@ -5,6 +5,7 @@ out/
 bridge/lib/
 *.tgz
 *.vsix
+release/
 .DS_Store
 *.log
 .env

@@ -71,7 +71,7 @@ dsh plugin --profile rpc add "$(pwd)/bridge"
 
 # build and install the extension
 cd extension && npm run package
-code --install-extension dsh-vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.0.vsix
 ```
 
 Open a folder, then click **DSH** in the status bar or run `DSH: Connect`.
@@ -79,8 +79,8 @@ Open a folder, then click **DSH** in the status bar or run `DSH: Connect`.
 Under Remote-SSH the extension must live in the **remote** extension host:
 
 ```bash
-scp extension/dsh-vscode-0.8.0.vsix user@host:/tmp/
-ssh user@host 'code-server --install-extension /tmp/dsh-vscode-0.8.0.vsix'
+scp extension/conduit4dsh2vscode-0.8.0.vsix user@host:/tmp/
+ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.0.vsix'
 ```
 
 Or use the helper: `bash deploy/setup.sh --remote user@host`.
@@ -216,7 +216,7 @@ dsh plugin --profile rpc add "$(pwd)/bridge"
 
 # 构建并安装扩展
 cd extension && npm run package
-code --install-extension dsh-vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.0.vsix
 ```
 
 打开一个文件夹，点击状态栏的 **DSH**，或在命令面板执行 `DSH: Connect`。
@@ -224,8 +224,8 @@ code --install-extension dsh-vscode-0.8.0.vsix
 远端（Remote-SSH）场景下，扩展必须装在**远端**扩展宿主：
 
 ```bash
-scp extension/dsh-vscode-0.8.0.vsix user@host:/tmp/
-ssh user@host 'code-server --install-extension /tmp/dsh-vscode-0.8.0.vsix'
+scp extension/conduit4dsh2vscode-0.8.0.vsix user@host:/tmp/
+ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.0.vsix'
 ```
 
 或使用脚本：`bash deploy/setup.sh --remote user@host`。
