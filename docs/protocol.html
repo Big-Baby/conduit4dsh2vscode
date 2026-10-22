@@ -127,9 +127,9 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
   </aside>
   <main class="content">
     <article class="page">
-      <div class="page-meta">设计 · 协议 1.0 · v0.8.0</div>
+      <div class="page-meta">设计 · 协议 1.1 · v0.8.1</div>
       <h1 id="rpc-协议">RPC 协议</h1>
-<p>协议版本 <strong>1.0</strong>。传输为 JSON-RPC 2.0，帧格式为 NDJSON：一行一条消息，UTF-8， 单帧上限 16 MiB。</p>
+<p>协议版本 <strong>1.1</strong>。传输为 JSON-RPC 2.0，帧格式为 NDJSON：一行一条消息，UTF-8， 单帧上限 16 MiB。</p>
 <h2 id="信封">信封</h2>
 <pre><code class="language-json">{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;session.list&quot;,&quot;params&quot;:{&quot;projectId&quot;:&quot;p_...&quot;}}
 {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;result&quot;:[]}
@@ -140,7 +140,8 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <h2 id="版本与能力">版本与能力</h2>
 <p><code>system.info</code> 返回 <code>protocolVersion</code> 与 <code>capabilities</code>。兼容规则：</p>
 <ol><li>主版本不同 → 客户端拒绝连接（<code>-32002</code>）；</li><li>次版本不同 → 按 <code>capabilities</code> 降级，不阻断。</li></ol>
-<p>当前能力：<code>multi-agent</code>、<code>changes-baseline</code>、<code>plugin-management</code>、 <code>file-mentions</code>、<code>history-paging</code>、<code>session-model-selection</code>。</p>
+<p>当前能力：<code>multi-agent</code>、<code>changes-baseline</code>、<code>plugin-management</code>、 <code>file-mentions</code>、<code>history-paging</code>、<code>session-model-selection</code>、 <code>permission-management</code>、<code>approval-prompts</code>、<code>subagent-cancel</code>。</p>
+<p>1.1 只新增方法与通知，未改变既有字段语义；1.0 端不会收到这些方法， 客户端按能力名隐藏对应控件。</p>
 <h2 id="错误码">错误码</h2>
 <table><thead><tr><th>码</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td>-32700</td><td>ParseError</td><td>帧不是合法 JSON</td></tr>
 <tr><td>-32600</td><td>InvalidRequest</td><td>信封不合法</td></tr>
@@ -210,6 +211,22 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <tr><td><code>agent.get</code></td><td><code>{sessionId,agentId}</code></td><td><code>AgentInfo</code></td></tr>
 <tr><td><code>agent.cancel</code></td><td><code>{sessionId,agentId}</code></td><td><code>{ok}</code></td></tr></tbody></table>
 <p><code>AgentNode</code> 是 <code>AgentInfo</code> 加 <code>children</code>。主 agent 的 id 固定为 <code>root</code>； 父节点缺失的子 agent 会挂到 root 下，界面始终只有一棵树。</p>
+<p><code>agent.cancel</code> 现在会真正终止 harness 子 agent，而不只是改写本地记录： <code>agentId=root</code> 等价于终止整轮（<code>session.cancel</code>），未知或已结束的 id 返回 <code>-32602</code>，避免客户端误以为它停下了什么。</p>
+<h3 id="permission-approval">permission / approval</h3>
+<table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>permission.get</code></td><td><code>{sessionId?}</code></td><td><code>PermissionState</code></td></tr>
+<tr><td><code>permission.set</code></td><td><code>{sessionId,preset}</code></td><td><code>PermissionState</code></td></tr>
+<tr><td><code>approval.respond</code></td><td><code>{requestId,outcome}</code></td><td><code>{ok}</code></td></tr></tbody></table>
+<pre><code class="language-ts">PermissionState = {
+  available: boolean            // harness 未装配权限服务时为 false
+  options: {value,name,description?}[]
+  preset?: string               // 当前生效的预设，或派生的 &#39;custom&#39;
+  defaultPreset?: string
+  sandbox?: string              // 预设背后的沙箱级别
+  approval?: string             // 预设背后的审批策略 ask | never
+}
+</code></pre>
+<p><code>permission.set</code> 由 harness 的预设服务同时改写沙箱模式与审批策略，<strong>立即对 该会话生效</strong>，无需重启或新建一轮。未知预设返回 <code>-32602</code>；会话仅在元数据中 存在时，网关会先创建或恢复对应 agent 再应用。</p>
+<p><code>approval.respond</code> 回答 harness 的 <code>approval/request</code> 瀑布。网关是唯一的 回答者：未回答（无人连接、5 分钟内无响应或请求被撤销）一律<strong>失败关闭</strong>， 被阻塞的工具调用不会执行。<code>allowed-once</code> 只授予当前这一次调用。</p>
 <h3 id="file">file</h3>
 <table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td><code>file.list</code></td><td><code>{query?,maxFiles?}</code></td><td><code>{files,truncated}</code></td></tr>
 <tr><td><code>file.readText</code></td><td><code>{path}</code></td><td><code>{path,content}</code></td></tr>
@@ -233,8 +250,10 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <tr><td><code>agent.event</code></td><td><code>{sessionId,agent}</code></td><td>按会话订阅</td></tr>
 <tr><td><code>model.changed</code></td><td><code>{providerId?,modelId?}</code></td><td>全局</td></tr>
 <tr><td><code>plugin.event</code></td><td><code>PluginEventParams</code></td><td>全局</td></tr>
+<tr><td><code>approval.request</code></td><td><code>{sessionId,requestId,toolName,callId?,reason?,agentId?,timeoutMs?}</code></td><td>全局</td></tr>
+<tr><td><code>permission.changed</code></td><td><code>{sessionId?,preset}</code></td><td>按会话订阅</td></tr>
 <tr><td><code>system.shutting-down</code></td><td><code>{reason,clientId?}</code></td><td>全局</td></tr></tbody></table>
-<p>stdio 只有一个客户端，全部下发。tcp/unix 下带 <code>sessionId</code> 的通知只发给 订阅了该会话的连接。</p>
+<p>stdio 只有一个客户端，全部下发。tcp/unix 下带 <code>sessionId</code> 的通知只发给 订阅了该会话的连接；<code>approval.request</code> 例外，它<strong>不带会话过滤</strong>——面板没开 也必须能弹窗批准，否则请求会超时失败。</p>
 <h3 id="sessionevent">SessionEvent</h3>
 <pre><code class="language-ts">{
   id: string

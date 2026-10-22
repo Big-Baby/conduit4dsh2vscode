@@ -3,9 +3,11 @@ import type { AgentInfo, SessionInfo } from '@conduit4dsh2vscode/protocol';
 import { registerCommands } from './commands';
 import type { CommandContext } from './commands/context';
 import { AgentService } from './core/agent-service';
+import { ApprovalPrompter, type ApprovalAsk } from './core/approval-ui';
 import { ChangeTracker } from './core/changes/tracker';
 import { ConnectionService } from './core/connection';
 import { ModelService } from './core/model-service';
+import { PermissionService } from './core/permission-service';
 import { PluginService } from './core/plugin-service';
 import { SessionService } from './core/session-service';
 import { ChatPanel } from './views/host/chatPanel';
@@ -19,6 +21,7 @@ interface Runtime {
   extensionUri: vscode.Uri;
   output: vscode.OutputChannel;
   statusBar: vscode.StatusBarItem;
+  permissionBar: vscode.StatusBarItem;
   tracker: ChangeTracker;
   changes: ChangeTracker;
   connection: ConnectionService;
@@ -26,12 +29,14 @@ interface Runtime {
   models: ModelService;
   agents: AgentService;
   plugins: PluginService;
+  permissions: PermissionService;
   trees: CommandContext['trees'];
   chat: {
     connection: ConnectionService;
     sessions: SessionService;
     models: ModelService;
     agents: AgentService;
+    permissions: PermissionService;
   };
 }
 
@@ -59,6 +64,15 @@ export function activate(context: vscode.ExtensionContext): void {
   const models = new ModelService(() => connection.requireClient());
   const agents = new AgentService(() => connection.requireClient());
   const plugins = new PluginService(() => connection.requireClient());
+  const permissions = new PermissionService(() => connection.requireClient());
+
+  const permissionBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
+  permissionBar.command = 'dsh.setPermission';
+  permissionBar.name = 'DSH Permission';
+  context.subscriptions.push(permissionBar);
+
+  const prompter = new ApprovalPrompter(permissions, output);
+  context.subscriptions.push(prompter);
 
   const trees = {
     sessions: new SessionTreeProvider(sessions),
@@ -68,7 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
     changes: new ChangesTreeProvider(tracker),
   };
 
-  const chat = { connection, sessions, models, agents };
+  const chat = { connection, sessions, models, agents, permissions };
 
   const commandContext: CommandContext = {
     extensionUri: context.extensionUri,
@@ -78,10 +92,12 @@ export function activate(context: vscode.ExtensionContext): void {
     models,
     agents,
     plugins,
+    permissions,
     changes: tracker,
     trees,
     openChat: (session) => openChat(session),
     refreshModels: () => refreshModelState(),
+    refreshPermission: () => refreshPermission(),
     syncChanges: () => syncChanges(),
   };
 
@@ -89,6 +105,7 @@ export function activate(context: vscode.ExtensionContext): void {
     extensionUri: context.extensionUri,
     output,
     statusBar,
+    permissionBar,
     tracker,
     changes: tracker,
     connection,
@@ -96,6 +113,7 @@ export function activate(context: vscode.ExtensionContext): void {
     models,
     agents,
     plugins,
+    permissions,
     trees,
     chat,
   };
@@ -138,6 +156,10 @@ export function activate(context: vscode.ExtensionContext): void {
       }),
       client.on('model.changed', () => refreshModelState(60)),
       client.on('plugin.event', () => void trees.plugins.load()),
+      // Approval questions and preset changes are client-wide: they must be
+      // handled even when no chat panel is open for that session.
+      client.on('approval.request', (params) => prompter.ask(params as ApprovalAsk)),
+      client.on('permission.changed', () => void refreshPermission()),
     );
   });
 
@@ -146,6 +168,8 @@ export function activate(context: vscode.ExtensionContext): void {
       trees.sessions.setProject(snapshot.project);
       trees.agents.setSession(snapshot.session);
       void refreshAll();
+    } else if (snapshot.state !== 'ready') {
+      permissionBar.hide();
     }
     renderStatus();
   });
@@ -253,6 +277,7 @@ async function refreshAll(): Promise<void> {
 
   runningAgents = current.agents.countRunning(current.trees.agents.rootsValue);
   renderStatus();
+  await refreshPermission();
 }
 
 /* ------------------------------ chat ------------------------------ */
@@ -302,6 +327,53 @@ function renderStatus(): void {
   if (pendingChanges > 0) extras.push(`${pendingChanges} pending change(s)`);
   if (runningAgents > 0) extras.push(`${runningAgents} agent(s) running`);
   if (extras.length) current.statusBar.text += ` · ${extras.join(' · ')}`;
+}
+
+/* ------------------------------ permission ------------------------------ */
+
+/**
+ * Mirrors the session's permission preset into the status bar and open panels.
+ *
+ * The bridge may expose no permission service at all; hiding the item is the
+ * honest answer, since a selector that cannot apply anything is worse than no
+ * selector.
+ */
+async function refreshPermission(): Promise<void> {
+  const current = runtime;
+  if (!current) return;
+
+  const session = current.connection.session;
+  if (!session || current.connection.snapshot.state !== 'ready') {
+    current.permissionBar.hide();
+    return;
+  }
+
+  try {
+    const state = await current.permissions.get(session.id);
+    ChatPanel.postPermissionAll(state);
+    if (!state.available || !state.preset) {
+      current.permissionBar.hide();
+      return;
+    }
+
+    const danger = state.preset === 'danger-full-access';
+    current.permissionBar.text = `${danger ? '$(unlock)' : '$(shield)'} ${state.preset}`;
+    current.permissionBar.tooltip = [
+      `Permission: ${state.preset}`,
+      state.sandbox ? `Sandbox: ${state.sandbox}` : '',
+      state.approval ? `Approval: ${state.approval}` : '',
+      'Click to change',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    current.permissionBar.backgroundColor = danger
+      ? new vscode.ThemeColor('statusBarItem.warningBackground')
+      : undefined;
+    current.permissionBar.show();
+  } catch (error) {
+    current.permissionBar.hide();
+    current.output.appendLine(`[permission] ${(error as Error).message}`);
+  }
 }
 
 /* ------------------------------ change tracking ------------------------------ */

@@ -127,7 +127,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
   </aside>
   <main class="content">
     <article class="page">
-      <div class="page-meta">实现 · 协议 1.0 · v0.8.0</div>
+      <div class="page-meta">实现 · 协议 1.1 · v0.8.1</div>
       <h1 id="网关-bridge">网关（bridge）</h1>
 <p><code>@conduit4dsh2vscode/bridge</code> 是挂载在 dsh 进程内的 cordis 插件。它不渲染界面， 只把 harness 能力转换为 JSON-RPC 服务。</p>
 <h2 id="插件形态">插件形态</h2>
@@ -211,6 +211,20 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <tr><td><code>agent/disposed</code></td><td><code>agent.result</code></td></tr>
 <tr><td><code>agent/error</code> / <code>agent/request-error</code></td><td><code>error</code></td></tr></tbody></table>
 <p>用户主动取消后，harness 会把状态置回 idle，不会单独报 cancelled。网关记录取消 意图，在终止事件到达时改写为 <code>cancelled</code>，避免界面误报“已完成”。</p>
+<h2 id="权限与审批">权限与审批</h2>
+<p>网关适配两个 harness 服务：</p>
+<table><thead><tr><th>harness 服务</th><th>网关中的职责</th></tr></thead><tbody><tr><td><code>permissionPresets</code></td><td>读取预设目录、按会话读写当前预设（<code>permission.*</code>）</td></tr>
+<tr><td><code>approval</code> + <code>approval/request</code></td><td>注册唯一的审批回答者，把问题转发给编辑器</td></tr></tbody></table>
+<p>预设把沙箱模式与审批策略打包，<code>permission.set</code> 直接调用 <code>permissionPresets.set(session, name)</code>，由 harness 自己写入两个 knob， 因此切换对<strong>当前会话立即生效</strong>，不重启进程、不新建 agent。若会话只存在 元数据里（从未 resume），网关先 <code>ensureLive()</code> 再应用，否则没有可寻址对象。</p>
+<p>审批是关键路径：<code>approval/request</code> 是 cordis 瀑布，谁先返回谁说了算，没有 回答者就会 <code>unavailable</code>（失败关闭）。网关在激活期只做订阅、不写任何 dsh 配置，把问题挂起到 <code>approval.respond</code>，并有三道兜底：</p>
+<ol><li>5 分钟超时 → <code>cancelled</code>，工具动作不执行；</li><li>请求被撤销（turn 结束）→ 监听 <code>AbortSignal</code>，同样 <code>cancelled</code>；</li><li>没有客户端连接 → 直接 <code>unavailable</code>。</li></ol>
+<p><code>allowed-once</code> 只对本次调用有效，不做任何记忆。</p>
+<h2 id="终止链路">终止链路</h2>
+<p><code>session.cancel</code> 依次做四件事：</p>
+<ol><li>取消该会话登记的全部子 agent（它们跑在自己的 session 里）；</li><li>取消根 agent；</li><li>把仍在进行中的工具调用补成 <code>cancelled</code> 结果——harness 不会为被中断的</li></ol>
+<p>   调用补发 <code>tool/result</code>，不补就会永远停在 running；</p>
+<ol><li>冲刷本轮流式文本，然后置 <code>idle</code>。</li></ol>
+<p><code>agent.cancel(agentId≠root)</code> 只停那一个子 agent。句柄来自 <code>agent/created</code> 与流事件中出现的子 agent，因此只能取消<strong>本进程内见过</strong>的 agent；未知 id 返回 <code>-32602</code> 而不是静默成功。</p>
 <h2 id="限制">限制</h2>
 <ul><li><code>session.fork</code> 仅在 replay 后端可用；</li><li>live 模式下子 agent 的归属依赖“当前运行中的主会话”，并行运行多个会话时</li></ul>
 <p>  子 agent 可能挂到最先运行的那个；</p>

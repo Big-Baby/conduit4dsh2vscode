@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendDelta, createCard, mergeFinal, setAllCollapsed, upsertToolCard } from './cards';
+import { appendDelta, createCard, markInterrupted, mergeFinal, setAllCollapsed, upsertToolCard } from './cards';
 import type { ChatCard } from '../types';
 
 describe('streaming cards', () => {
@@ -80,5 +80,29 @@ describe('bulk folding', () => {
     setAllCollapsed(cards, true);
 
     expect(cards[0]?.collapsed).toBe(false);
+  });
+});
+
+describe('stopping a turn', () => {
+  it('marks an in-flight tool call as cancelled', () => {
+    const cards: ChatCard[] = [];
+    upsertToolCard(cards, { id: 't1', name: 'bash', status: 'running' }, { turn: 1 });
+
+    markInterrupted(cards);
+
+    expect(cards[0]?.tool?.status).toBe('cancelled');
+    expect(cards[0]?.status).toBe('cancelled');
+  });
+
+  it('leaves finished tool calls untouched and keeps partial text', () => {
+    const cards: ChatCard[] = [];
+    upsertToolCard(cards, { id: 't1', name: 'read', status: 'success' }, { turn: 1 });
+    appendDelta(cards, { turn: 1, text: 'half an answer' });
+
+    markInterrupted(cards);
+
+    expect(cards[0]?.tool?.status).toBe('success');
+    expect(cards[1]?.text).toBe('half an answer');
+    expect(cards[1]?.streaming).toBe(false);
   });
 });

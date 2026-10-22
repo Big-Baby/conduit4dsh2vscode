@@ -164,7 +164,7 @@ Webview 无法解析 VS Code 主题 token，因此宿主把颜色解析成 `--ds
 | `dsh.profile` | `rpc` | profile |
 | `dsh.transport` | `stdio` | 传输方式 |
 | `dsh.rpcHost` / `dsh.rpcPort` / `dsh.rpcSocketPath` / `dsh.rpcToken` | — | tcp/unix 参数 |
-| `dsh.permissionMode` | `workspace-write` | 沙箱级别 |
+| `dsh.permissionMode` | `workspace-write` | 初始沙箱级别（经 `DSH_PERMISSION_MODE` 传入）；会话内切换用 `DSH: Set Permission` |
 | `dsh.enableLiveAgentLoop` | `true` | 真实 agent loop |
 | `dsh.autoConnect` | `true` | 打开工作区后自动连接 |
 | `dsh.autoOpenChat` | `false` | 连接后打开对话区 |
@@ -187,6 +187,34 @@ Webview 无法解析 VS Code 主题 token，因此宿主把颜色解析成 `--ds
 | 会话 | 新建、打开、重命名、分叉、归档、取消归档、复制 ID、删除、刷新 |
 | 模型 | 添加供应商、设置密钥、删除供应商、设为默认、同步配置、刷新 |
 | Agent | 刷新、详情、取消 |
+| 权限 | `dsh.setPermission`、`dsh.showPermission` |
 | 变更 | 确认、对比、刷新、重置基线、加入白名单、打开 diff、还原 |
 | 插件 | 刷新、搜索安装、输入 spec 安装、启停、卸载 |
 | 界面 | 全部折叠、全部展开、外观设置 |
+
+## 权限与终止
+
+权限有两条入口，指向同一份会话状态：
+
+- 对话页标题栏的预设下拉（模型选择旁边）与状态栏的盾牌图标；
+- 命令面板的 `DSH: Set Permission` / `DSH: Show Permission Details`。
+
+预设由 harness 的 `dsh-permission-presets` 定义，同时决定沙箱模式与审批策略：
+`read-only`/`workspace-write` 配 `ask`，`danger-full-access` 配 `never`。
+切换即时生效，不改写 `dsh.permissionMode`（那个设置只决定新会话的起点）。
+harness 未装配权限服务时，控件直接隐藏。
+
+工具动作越出沙箱时，harness 走 `approval/request` 瀑布；网关把它转成编辑器
+模态框（Allow once / Deny）。**只有一次授权**，不记忆；关闭弹窗即拒绝；5 分钟
+无响应或没有客户端连接时按失败关闭处理，动作不会执行。
+
+终止分三级：
+
+| 操作 | 作用 |
+| --- | --- |
+| `Esc` / 输入框 Stop | 终止整轮：根 agent 与所有子 agent 一起停 |
+| 子 agent 卡片上的 Stop | 只停该子 agent，整轮继续 |
+| `DSH: Cancel Agent`（Agent 树） | 同上，带确认 |
+
+被中断的工具调用会立即标为 `cancelled`（harness 不会为它们补发结果），
+已产生的部分文本保留为只读内容。

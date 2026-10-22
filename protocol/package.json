@@ -1,6 +1,6 @@
 {
   "name": "@conduit4dsh2vscode/protocol",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Wire contract shared by the DSH bridge and the VS Code client",
   "license": "GPL-3.0-only",
   "type": "module",

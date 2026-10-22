@@ -1,9 +1,11 @@
 import type {
   AgentInfo,
   AgentNode,
+  ApprovalOutcome,
   BundleItem,
   DefaultModelSelection,
   HistoryPage,
+  PermissionState,
   MessageInfo,
   ModelInfo,
   PluginChangeResult,
@@ -99,6 +101,23 @@ export interface MethodMap {
   'agent.tree': { params: { sessionId: string }; result: AgentNode[] };
   'agent.get': { params: { sessionId: string; agentId: string }; result: AgentInfo };
   'agent.cancel': { params: { sessionId: string; agentId: string }; result: { ok: true } };
+
+  /**
+   * Permission presets. `sessionId` is optional so a client can read the
+   * catalog before opening a session; without it the result carries the
+   * process catalog and the default only.
+   */
+  'permission.get': { params: { sessionId?: string }; result: PermissionState };
+  'permission.set': { params: { sessionId: string; preset: string }; result: PermissionState };
+  /**
+   * Answers a pending harness approval question. The bridge fails closed: an
+   * unanswered or unknown request is reported as `unavailable` to the harness,
+   * so the blocked tool action never runs.
+   */
+  'approval.respond': {
+    params: { requestId: string; outcome: Exclude<ApprovalOutcome, 'unavailable' | 'cancelled'> };
+    result: { ok: true };
+  };
 
   'file.readText': { params: { path: string }; result: { path: string; content: string } };
   'file.list': {

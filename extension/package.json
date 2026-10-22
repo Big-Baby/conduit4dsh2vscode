@@ -2,7 +2,7 @@
   "name": "conduit4dsh2vscode",
   "displayName": "DSH Conduit for VS Code",
   "description": "A conduit between DeepSeek Harness and VS Code: sessions, models, multi-agent tasks and change review over a local JSON-RPC bridge.",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "publisher": "conduit4dsh2vscode",
   "license": "GPL-3.0-only",
   "engines": {
@@ -76,7 +76,7 @@
             "danger-full-access"
           ],
           "default": "workspace-write",
-          "description": "Sandbox level passed to the harness through DSH_PERMISSION_MODE."
+          "description": "Initial sandbox level passed to the harness through DSH_PERMISSION_MODE. Change it per session at runtime with \"DSH: Set Permission\"."
         },
         "dsh.enableLiveAgentLoop": {
           "type": "boolean",
@@ -357,6 +357,16 @@
         "command": "dsh.cancelAgent",
         "title": "DSH: Cancel Agent",
         "icon": "$(circle-slash)"
+      },
+      {
+        "command": "dsh.setPermission",
+        "title": "DSH: Set Permission",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "dsh.showPermission",
+        "title": "DSH: Show Permission Details",
+        "icon": "$(info)"
       },
       {
         "command": "dsh.confirmChanges",

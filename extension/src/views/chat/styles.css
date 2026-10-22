@@ -120,6 +120,24 @@ body.compact {
   border-color: var(--vscode-focusBorder, var(--vscode-dropdown-border, transparent));
 }
 
+/* Sandbox level. Named presets only: a derived "custom" state labels the
+   control but is not offered as a choice. */
+.permission-picker {
+  max-width: 200px;
+  padding: 3px 6px;
+  font: inherit;
+  color: var(--vscode-dropdown-foreground);
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border, transparent);
+  border-radius: 4px;
+}
+
+/* Full access also turns approvals off, so it must not look like the others. */
+.permission-danger {
+  color: var(--vscode-inputValidation-warningForeground, var(--vscode-dropdown-foreground));
+  border-color: var(--vscode-inputValidation-warningBorder, var(--dsh-border));
+}
+
 .btn {
   padding: 4px 10px;
   font: inherit;
@@ -378,6 +396,22 @@ body.compact {
 .agent-count {
   font-size: 11px;
   color: var(--dsh-system-text);
+}
+
+/* Per-sub-agent stop: small enough that it never competes with the header. */
+.agent-stop {
+  padding: 1px 8px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--vscode-errorForeground, #fff);
+  background: transparent;
+  border: 1px solid var(--vscode-inputValidation-errorBorder, #b3261e);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.agent-stop:hover {
+  background: var(--vscode-inputValidation-errorBorder, #b3261e);
 }
 
 .card-spacer {

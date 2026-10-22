@@ -1,6 +1,6 @@
 # RPC 协议
 
-协议版本 **1.0**。传输为 JSON-RPC 2.0，帧格式为 NDJSON：一行一条消息，UTF-8，
+协议版本 **1.1**。传输为 JSON-RPC 2.0，帧格式为 NDJSON：一行一条消息，UTF-8，
 单帧上限 16 MiB。
 
 ## 信封
@@ -24,7 +24,11 @@
 2. 次版本不同 → 按 `capabilities` 降级，不阻断。
 
 当前能力：`multi-agent`、`changes-baseline`、`plugin-management`、
-`file-mentions`、`history-paging`、`session-model-selection`。
+`file-mentions`、`history-paging`、`session-model-selection`、
+`permission-management`、`approval-prompts`、`subagent-cancel`。
+
+1.1 只新增方法与通知，未改变既有字段语义；1.0 端不会收到这些方法，
+客户端按能力名隐藏对应控件。
 
 ## 错误码
 
@@ -138,6 +142,37 @@ live 模式返回 `-32000` 并说明原因。
 `AgentNode` 是 `AgentInfo` 加 `children`。主 agent 的 id 固定为 `root`；
 父节点缺失的子 agent 会挂到 root 下，界面始终只有一棵树。
 
+`agent.cancel` 现在会真正终止 harness 子 agent，而不只是改写本地记录：
+`agentId=root` 等价于终止整轮（`session.cancel`），未知或已结束的 id
+返回 `-32602`，避免客户端误以为它停下了什么。
+
+### permission / approval
+
+| 方法 | 参数 | 结果 |
+| --- | --- | --- |
+| `permission.get` | `{sessionId?}` | `PermissionState` |
+| `permission.set` | `{sessionId,preset}` | `PermissionState` |
+| `approval.respond` | `{requestId,outcome}` | `{ok}` |
+
+```ts
+PermissionState = {
+  available: boolean            // harness 未装配权限服务时为 false
+  options: {value,name,description?}[]
+  preset?: string               // 当前生效的预设，或派生的 'custom'
+  defaultPreset?: string
+  sandbox?: string              // 预设背后的沙箱级别
+  approval?: string             // 预设背后的审批策略 ask | never
+}
+```
+
+`permission.set` 由 harness 的预设服务同时改写沙箱模式与审批策略，**立即对
+该会话生效**，无需重启或新建一轮。未知预设返回 `-32602`；会话仅在元数据中
+存在时，网关会先创建或恢复对应 agent 再应用。
+
+`approval.respond` 回答 harness 的 `approval/request` 瀑布。网关是唯一的
+回答者：未回答（无人连接、5 分钟内无响应或请求被撤销）一律**失败关闭**，
+被阻塞的工具调用不会执行。`allowed-once` 只授予当前这一次调用。
+
 ### file
 
 | 方法 | 参数 | 结果 |
@@ -179,10 +214,13 @@ live 模式返回 `-32000` 并说明原因。
 | `agent.event` | `{sessionId,agent}` | 按会话订阅 |
 | `model.changed` | `{providerId?,modelId?}` | 全局 |
 | `plugin.event` | `PluginEventParams` | 全局 |
+| `approval.request` | `{sessionId,requestId,toolName,callId?,reason?,agentId?,timeoutMs?}` | 全局 |
+| `permission.changed` | `{sessionId?,preset}` | 按会话订阅 |
 | `system.shutting-down` | `{reason,clientId?}` | 全局 |
 
 stdio 只有一个客户端，全部下发。tcp/unix 下带 `sessionId` 的通知只发给
-订阅了该会话的连接。
+订阅了该会话的连接；`approval.request` 例外，它**不带会话过滤**——面板没开
+也必须能弹窗批准，否则请求会超时失败。
 
 ### SessionEvent
 

@@ -104,8 +104,15 @@ export class RpcServer {
     const reader = createInterface({ input: process.stdin, terminal: false });
     const context: ClientContext = { clientId: 'stdio', authed: true };
     const send = (response: JsonRpcResponse): void => {
-      process.stdout.write(`${JSON.stringify(response)}\n`);
+      this.writeStdio(`${JSON.stringify(response)}\n`);
     };
+
+    // A client that exits mid-notification leaves the pipe closed; the write
+    // then fails asynchronously and, unhandled, takes the whole bridge down.
+    process.stdout.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EPIPE') return;
+      this.log.warn(`stdout error: ${error.message}`);
+    });
 
     reader.on('line', (line) => {
       void this.handleLine(line, context, send);
@@ -114,6 +121,17 @@ export class RpcServer {
       this.broadcast('system.shutting-down', { reason: 'stdin-closed' });
       setTimeout(() => process.exit(0), 50);
     });
+  }
+
+  /** Writes one frame to stdout, tolerating a closed pipe. */
+  private writeStdio(frame: string): void {
+    try {
+      process.stdout.write(frame);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EPIPE') {
+        this.log.warn(`stdout write failed: ${(error as Error).message}`);
+      }
+    }
   }
 
   private startTcp(): void {
@@ -239,7 +257,7 @@ export class RpcServer {
     const frame = `${JSON.stringify(notification)}\n`;
 
     if (this.options.transport === 'stdio') {
-      process.stdout.write(frame);
+      this.writeStdio(frame);
       return;
     }
 

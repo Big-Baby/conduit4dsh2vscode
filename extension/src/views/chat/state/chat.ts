@@ -10,6 +10,7 @@ import type {
   InboundMessage,
   Mention,
   OutboundMessage,
+  PermissionState,
   ProviderInfo,
   SessionEvent,
   SessionInfo,
@@ -69,6 +70,7 @@ export function createChatStore(post: (message: OutboundMessage) => void) {
     cards: [] as ChatCard[],
     agents: {} as Record<string, AgentInfo>,
     changes: { total: 0, confirmedAt: '' },
+    permission: { available: false, options: [] } as PermissionState,
     prefs: { ...DEFAULT_PREFS } as UiPrefs,
     serverMode: 'replay' as 'live' | 'replay',
     files: [] as FileEntry[],
@@ -273,6 +275,7 @@ export function createChatStore(post: (message: OutboundMessage) => void) {
         state.loadingHistory = false;
         state.historyError = '';
         for (const agent of flatten(message.agents ?? [])) state.agents[agent.id] = agent;
+        if (message.permission) state.permission = message.permission;
         break;
       }
 
@@ -311,9 +314,14 @@ export function createChatStore(post: (message: OutboundMessage) => void) {
       case 'state': {
         const wasRunning = state.running;
         state.running = message.status === 'running';
-        if (wasRunning && !state.running) cardOps.finalizeStreaming(state.cards);
+        // A turn that ends without a result was stopped: close what it left open.
+        if (wasRunning && !state.running) cardOps.markInterrupted(state.cards);
         break;
       }
+
+      case 'permission':
+        state.permission = message.permission;
+        break;
 
       case 'agent': {
         const agent = message.agent;

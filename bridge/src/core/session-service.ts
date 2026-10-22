@@ -20,8 +20,10 @@ import type { Logger } from '../runtime/logger';
 import { ROOT_AGENT_ID, type AgentRegistry } from './agent-registry';
 import { SessionMetaStore, toSessionInfo, type SessionMeta } from './session-store';
 
-export interface SessionServiceDeps {
-  replay: SessionBackend;
+/** Statuses that mean the agent still has work in flight. */
+const ACTIVE: ReadonlySet<AgentStatus> = new Set(['pending', 'running', 'waiting']);
+
+export interface SessionServiceDeps {  replay: SessionBackend;
   live?: SessionBackend;
   meta: SessionMetaStore;
   hub: SessionEventHub;
@@ -125,8 +127,22 @@ export class SessionService {
     }
   }
 
+  /**
+   * Stops the turn.
+   *
+   * The backend cancels the root agent *and* every live sub-agent, then closes
+   * interrupted tool calls. Registry entries are folded afterwards so
+   * `agent.list` does not keep reporting work that will never finish.
+   */
   async cancel(sessionId: string): Promise<void> {
     await this.backend.cancel(sessionId);
+    for (const agent of this.deps.agents.list(sessionId)) {
+      // The root is the conversation, not a task: leaving it "cancelled" would
+      // misreport the session after the next turn starts.
+      if (agent.id === ROOT_AGENT_ID) continue;
+      if (!ACTIVE.has(agent.status)) continue;
+      this.deps.agents.setStatus(sessionId, agent.id, 'cancelled');
+    }
     this.deps.hub.setStatus(sessionId, 'idle');
   }
 
@@ -206,7 +222,21 @@ export class SessionService {
   }
 
   cancelAgent(sessionId: string, agentId: string): AgentInfo | undefined {
-    if (agentId === ROOT_AGENT_ID) return this.deps.agents.get(sessionId, agentId);
+    if (agentId === ROOT_AGENT_ID) {
+      void this.cancel(sessionId);
+      return this.deps.agents.get(sessionId, agentId);
+    }
+
+    const stopped = this.backend.cancelAgent?.(sessionId, agentId) ?? false;
+    // A live backend that cannot address the agent means it already finished;
+    // reporting success would leave the UI believing it stopped something.
+    if (!stopped && this.backend.mode === 'live') {
+      if (!this.deps.agents.get(sessionId, agentId)) {
+        throw new RpcError(ErrorCode.InvalidParams, `unknown agent: ${agentId}`);
+      }
+      throw new RpcError(ErrorCode.InvalidParams, `agent is not running: ${agentId}`);
+    }
+
     const agent = this.deps.agents.setStatus(sessionId, agentId, 'cancelled');
     if (agent) {
       this.deps.hub.emit(sessionId, 'agent.status', {

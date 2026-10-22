@@ -48,8 +48,24 @@ export interface NotificationMap {
   'agent.event': { sessionId: string; agent: AgentInfo };
   'model.changed': { providerId?: string; modelId?: string };
   'plugin.event': PluginEventParams;
+  /**
+   * A tool action is blocked until the user answers. The bridge waits for
+   * `approval.respond`; the harness fails closed when nobody answers.
+   */
+  'approval.request': {
+    sessionId: string;
+    requestId: string;
+    toolName: string;
+    callId?: string;
+    reason?: string;
+    agentId?: string;
+    /** Milliseconds before the bridge withdraws the question. */
+    timeoutMs?: number;
+  };
+  'permission.changed': { sessionId?: string; preset: string };
   'system.shutting-down': { reason: string; clientId?: string };
 }
+
 
 export type NotificationName = keyof NotificationMap;
 

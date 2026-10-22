@@ -63,6 +63,28 @@ export interface ProviderInfo {
   models: ModelInfo[];
 }
 
+/** One selectable permission preset. */
+export interface PermissionPreset {
+  value: string;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Session permission state.
+ *
+ * `available: false` means the bridge or harness exposes no presets; the
+ * control is hidden rather than shown as a dead selector.
+ */
+export interface PermissionState {
+  available: boolean;
+  options: PermissionPreset[];
+  preset?: string;
+  defaultPreset?: string;
+  sandbox?: string;
+  approval?: string;
+}
+
 export interface SessionInfo {
   id: string;
   projectId: string;
@@ -108,6 +130,8 @@ export type OutboundMessage =
   | { type: 'ready' }
   | { type: 'send'; text: string; mentions?: Array<{ path: string; name?: string }> }
   | { type: 'setModel'; modelId: string; effort?: string }
+  | { type: 'setPermission'; preset: string }
+  | { type: 'cancelAgent'; agentId: string }
   | { type: 'stop' }
   | { type: 'listFiles' }
   | { type: 'history' }
@@ -130,6 +154,7 @@ export interface SnapshotMessage {
   agents: AgentInfo[];
   hasMoreHistory?: boolean;
   historyTotal?: number;
+  permission?: PermissionState;
 }
 
 export interface HistoryPageMessage {
@@ -147,6 +172,7 @@ export type InboundMessage =
   | { type: 'state'; status: string }
   | { type: 'agent'; agent: AgentInfo }
   | { type: 'providers'; providers: ProviderInfo[]; defaultModelId?: string }
+  | { type: 'permission'; permission: PermissionState }
   | { type: 'changes'; total: number; confirmedAt: string }
   | { type: 'theme'; palette: Record<string, string> }
   | { type: 'prefs'; prefs: Record<string, unknown> }

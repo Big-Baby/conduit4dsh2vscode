@@ -127,7 +127,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
   </aside>
   <main class="content">
     <article class="page">
-      <div class="page-meta">开始 · 协议 1.0 · v0.8.0</div>
+      <div class="page-meta">开始 · 协议 1.1 · v0.8.1</div>
       <h1 id="conduit-dsh-to-vs-code">Conduit · DSH to VS Code</h1>
 <p>DeepSeek Harness 的编辑器前端。它在 dsh 进程内挂载一个 JSON-RPC 传输桥， 再由 VS Code 扩展把项目、会话、模型、多 agent 任务与文件变更呈现到编辑器里。</p>
 <p>与 <code>dsh web</code> 的区别在于链路方向：不经过 HTTP 与浏览器，也不依赖端口转发。 扩展以 <code>extensionKind: workspace</code> 运行，在 Remote-SSH 场景下直接跑在远端， 文件读写与终端操作都在真实工作区完成。</p>
@@ -150,13 +150,13 @@ printf &#39;%s\n&#39; &#39;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1
 npm install
 npm run build
 cd extension &amp;&amp; npm run package
-code --install-extension conduit4dsh2vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.1.vsix
 </code></pre>
 <p>也可以在 VS Code 中执行 <code>DSH: Connect</code>，扩展会自动探测 CLI（配置路径 → PATH → npx）。</p>
 <h2 id="配置">配置</h2>
 <table><thead><tr><th>设置</th><th>默认</th><th>说明</th></tr></thead><tbody><tr><td><code>dsh.transport</code></td><td><code>stdio</code></td><td><code>stdio</code> / <code>tcp</code> / <code>unix</code></td></tr>
 <tr><td><code>dsh.profile</code></td><td><code>rpc</code></td><td>连接使用的 profile</td></tr>
-<tr><td><code>dsh.permissionMode</code></td><td><code>workspace-write</code></td><td>沙箱级别，经 <code>DSH_PERMISSION_MODE</code> 传入</td></tr>
+<tr><td><code>dsh.permissionMode</code></td><td><code>workspace-write</code></td><td>新会话的初始沙箱级别；运行中在对话标题栏切换</td></tr>
 <tr><td><code>dsh.enableLiveAgentLoop</code></td><td><code>true</code></td><td>关闭后回放本地记录，不调用模型</td></tr>
 <tr><td><code>dsh.providerConfig</code></td><td><code>{}</code></td><td>声明式供应商配置，连接后自动同步</td></tr>
 <tr><td><code>dsh.changes.exclude</code></td><td>构建产物等</td><td>变更跟踪忽略的 glob</td></tr>
@@ -174,7 +174,7 @@ scripts/      文档生成与打包脚本
 deploy/       本机/远端安装脚本
 </code></pre>
 <h2 id="许可">许可</h2>
-<p><a href="https://github.com/conduit4dsh2vscode/conduit4dsh2vscode/blob/main/LICENSE">GPL-3.0</a></p>
+<p><a href="https://github.com/Big-Baby/conduit4dsh2vscode/blob/main/LICENSE">GPL-3.0</a></p>
       <nav class="pager">
     <span></span>
     <a class="next" href="architecture.html">架构 →</a>

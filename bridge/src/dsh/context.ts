@@ -26,7 +26,43 @@ export interface AgentsService {
 
 export interface SessionsService {
   flush(session: unknown): Promise<void> | void;
+  /** Looks up the live session object; permission calls address it directly. */
+  get?(id: string): unknown;
 }
+
+/** One selectable preset as published by the harness catalog. */
+export interface HarnessPresetOption {
+  value: string;
+  name: string;
+  description?: string;
+}
+
+export interface PermissionPresetsService {
+  catalog(): {
+    options: HarnessPresetOption[];
+    defaultOptions?: HarnessPresetOption[];
+    defaultPreset?: string;
+  };
+  current(session: unknown): string;
+  resolve?(name: string): { sandbox?: string; approval?: string };
+  set(session: unknown, name: string): void;
+}
+
+export interface ApprovalService {
+  policy?: string;
+  setPolicy?(agent: unknown, policy: 'ask' | 'never'): void;
+}
+
+/** Payload the harness passes to `approval/request` waterfall listeners. */
+export interface HarnessApprovalRequest {
+  agent?: unknown;
+  toolName?: string;
+  callId?: string;
+  reason?: string;
+  displayReason?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
 
 export interface SessionRecord {
   header: { id: string; createdAt: number; cwd?: string; origin?: string };
@@ -129,7 +165,23 @@ export class Harness {
     return this.probe('pluginManager');
   }
 
-  on(event: string, handler: (...args: unknown[]) => void): () => void {
+  /** Permission preset service; absent on profiles that compose no permissions. */
+  get permissionPresets(): PermissionPresetsService | undefined {
+    return this.probe('permissionPresets');
+  }
+
+  /** Approval policy service behind the permission presets. */
+  get approval(): ApprovalService | undefined {
+    return this.probe('approval');
+  }
+
+  /**
+   * Subscribes to a cordis event.
+   *
+   * Waterfall listeners must return a value, so the handler's return value is
+   * preserved: the approval answerer relies on it.
+   */
+  on(event: string, handler: (...args: unknown[]) => unknown): () => void {
     try {
       return this.ctx.on(event, handler as never);
     } catch {

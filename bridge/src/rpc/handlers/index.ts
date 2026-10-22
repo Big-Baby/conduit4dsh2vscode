@@ -4,11 +4,13 @@ import type { SessionService } from '../../core/session-service';
 import type { SettingsService } from '../../core/settings-service';
 import type { WorkspaceFiles } from '../../core/workspace-files';
 import type { ModelService } from '../../core/model-service';
+import type { PermissionService } from '../../core/permission-service';
 import type { PluginAdmin } from '../../dsh/plugins';
 import { agentHandlers } from './agent';
 import { configHandlers, type ConfigContext } from './config';
 import { fileHandlers } from './file';
 import { modelHandlers } from './model';
+import { permissionHandlers } from './permission';
 import { pluginHandlers } from './plugin';
 import { sessionHandlers } from './session';
 import { systemHandlers, type SystemContext } from './system';
@@ -21,6 +23,7 @@ export interface HandlerDeps {
   files: WorkspaceFiles;
   settings: SettingsService;
   plugins: PluginAdmin;
+  permissions: PermissionService;
   system: SystemContext;
   config: ConfigContext;
 }
@@ -40,6 +43,7 @@ export function createHandlers(deps: HandlerDeps): MethodHandlers {
     ...agentHandlers(deps.sessions),
     ...fileHandlers(deps.files),
     ...pluginHandlers(deps.plugins),
+    ...permissionHandlers(deps.permissions),
     ...configHandlers(deps.settings, deps.config),
   };
 }

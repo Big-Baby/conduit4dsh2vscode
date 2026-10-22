@@ -88,6 +88,11 @@ export class ReplayBackend implements SessionBackend {
     this.hub.setStatus(sessionId, 'idle');
   }
 
+  /** Replay has no live agents: reporting success would be a lie. */
+  cancelAgent(): boolean {
+    return false;
+  }
+
   async listExtraSessionIds(): Promise<string[]> {
     return [];
   }

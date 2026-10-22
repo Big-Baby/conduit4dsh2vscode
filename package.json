@@ -1,6 +1,6 @@
 {
   "name": "conduit4dsh2vscode-workspace",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "description": "DeepSeek Harness for VS Code: a transport bridge and an editor client",
   "license": "GPL-3.0-only",

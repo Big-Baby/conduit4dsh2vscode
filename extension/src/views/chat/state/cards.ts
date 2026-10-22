@@ -188,6 +188,25 @@ export function finalizeStreaming(cards: ChatCard[], agentId?: string, kinds?: C
   }
 }
 
+/**
+ * Closes whatever a stop interrupted.
+ *
+ * A cancelled turn produces no tool result, so tool cards would otherwise stay
+ * on "(running)" forever. Closing streaming text cards keeps the partial answer
+ * visible without pretending more is coming.
+ */
+export function markInterrupted(cards: ChatCard[]): void {
+  for (const card of cards) {
+    if (card.kind === 'tool' && card.tool && card.tool.status === 'running') {
+      card.tool = { ...card.tool, status: 'cancelled', result: card.tool.result ?? 'interrupted by user' };
+      card.status = 'cancelled';
+      card.streaming = false;
+      continue;
+    }
+    if (card.streaming) card.streaming = false;
+  }
+}
+
 /** Upserts a tool card; arguments stream in, so the same id is updated in place. */
 export function upsertToolCard(
   cards: ChatCard[],

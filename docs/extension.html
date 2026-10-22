@@ -127,7 +127,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
   </aside>
   <main class="content">
     <article class="page">
-      <div class="page-meta">实现 · 协议 1.0 · v0.8.0</div>
+      <div class="page-meta">实现 · 协议 1.1 · v0.8.1</div>
       <h1 id="编辑器客户端-extension">编辑器客户端（extension）</h1>
 <p>本扩展是一个 <code>extensionKind: workspace</code> 的扩展。它不做模型调用， 只负责连接网关、组织视图、维护编辑器侧状态（变更基线、界面偏好）。</p>
 <h2 id="目录">目录</h2>
@@ -231,7 +231,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <tr><td><code>dsh.profile</code></td><td><code>rpc</code></td><td>profile</td></tr>
 <tr><td><code>dsh.transport</code></td><td><code>stdio</code></td><td>传输方式</td></tr>
 <tr><td><code>dsh.rpcHost</code> / <code>dsh.rpcPort</code> / <code>dsh.rpcSocketPath</code> / <code>dsh.rpcToken</code></td><td>—</td><td>tcp/unix 参数</td></tr>
-<tr><td><code>dsh.permissionMode</code></td><td><code>workspace-write</code></td><td>沙箱级别</td></tr>
+<tr><td><code>dsh.permissionMode</code></td><td><code>workspace-write</code></td><td>初始沙箱级别（经 <code>DSH_PERMISSION_MODE</code> 传入）；会话内切换用 <code>DSH: Set Permission</code></td></tr>
 <tr><td><code>dsh.enableLiveAgentLoop</code></td><td><code>true</code></td><td>真实 agent loop</td></tr>
 <tr><td><code>dsh.autoConnect</code></td><td><code>true</code></td><td>打开工作区后自动连接</td></tr>
 <tr><td><code>dsh.autoOpenChat</code></td><td><code>false</code></td><td>连接后打开对话区</td></tr>
@@ -245,9 +245,20 @@ hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
 <tr><td>会话</td><td>新建、打开、重命名、分叉、归档、取消归档、复制 ID、删除、刷新</td></tr>
 <tr><td>模型</td><td>添加供应商、设置密钥、删除供应商、设为默认、同步配置、刷新</td></tr>
 <tr><td>Agent</td><td>刷新、详情、取消</td></tr>
+<tr><td>权限</td><td><code>dsh.setPermission</code>、<code>dsh.showPermission</code></td></tr>
 <tr><td>变更</td><td>确认、对比、刷新、重置基线、加入白名单、打开 diff、还原</td></tr>
 <tr><td>插件</td><td>刷新、搜索安装、输入 spec 安装、启停、卸载</td></tr>
 <tr><td>界面</td><td>全部折叠、全部展开、外观设置</td></tr></tbody></table>
+<h2 id="权限与终止">权限与终止</h2>
+<p>权限有两条入口，指向同一份会话状态：</p>
+<ul><li>对话页标题栏的预设下拉（模型选择旁边）与状态栏的盾牌图标；</li><li>命令面板的 <code>DSH: Set Permission</code> / <code>DSH: Show Permission Details</code>。</li></ul>
+<p>预设由 harness 的 <code>dsh-permission-presets</code> 定义，同时决定沙箱模式与审批策略： <code>read-only</code>/<code>workspace-write</code> 配 <code>ask</code>，<code>danger-full-access</code> 配 <code>never</code>。 切换即时生效，不改写 <code>dsh.permissionMode</code>（那个设置只决定新会话的起点）。 harness 未装配权限服务时，控件直接隐藏。</p>
+<p>工具动作越出沙箱时，harness 走 <code>approval/request</code> 瀑布；网关把它转成编辑器 模态框（Allow once / Deny）。<strong>只有一次授权</strong>，不记忆；关闭弹窗即拒绝；5 分钟 无响应或没有客户端连接时按失败关闭处理，动作不会执行。</p>
+<p>终止分三级：</p>
+<table><thead><tr><th>操作</th><th>作用</th></tr></thead><tbody><tr><td><code>Esc</code> / 输入框 Stop</td><td>终止整轮：根 agent 与所有子 agent 一起停</td></tr>
+<tr><td>子 agent 卡片上的 Stop</td><td>只停该子 agent，整轮继续</td></tr>
+<tr><td><code>DSH: Cancel Agent</code>（Agent 树）</td><td>同上，带确认</td></tr></tbody></table>
+<p>被中断的工具调用会立即标为 <code>cancelled</code>（harness 不会为它们补发结果）， 已产生的部分文本保留为只读内容。</p>
       <nav class="pager">
     <a class="prev" href="bridge.html">← 网关</a>
     <a class="next" href="development.html">开发与发布 →</a>

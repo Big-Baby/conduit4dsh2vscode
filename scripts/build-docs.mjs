@@ -27,7 +27,7 @@ const LINK_REWRITE = {
   '../protocol/': 'protocol.html',
   '../bridge/': 'bridge.html',
   '../extension/': 'extension.html',
-  '../LICENSE': 'https://github.com/conduit4dsh2vscode/conduit4dsh2vscode/blob/main/LICENSE',
+  '../LICENSE': 'https://github.com/Big-Baby/conduit4dsh2vscode/blob/main/LICENSE',
 };
 
 const CSS = `
@@ -193,7 +193,10 @@ function renderTable(lines) {
 
 function renderMarkdown(markdown) {
   const blocks = [];
-  let text = markdown.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang, code) => {
+  // Windows editors and scripts love CRLF; every anchor here is `$`, which a
+  // trailing `\r` defeats, so the block parser used to stall and spin forever.
+  let text = String(markdown).replace(/\r\n?/g, '\n');
+  text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang, code) => {
     blocks.push({ lang: String(lang ?? ''), code: String(code ?? '') });
     return `\u0000BLOCK${blocks.length - 1}\u0000`;
   });
@@ -293,6 +296,13 @@ function renderMarkdown(markdown) {
       paragraph.push(lines[index] ?? '');
       index += 1;
     }
+    // Every block kind must consume at least one line; bailing out beats
+    // spinning until the heap runs out on input the parser cannot classify.
+    if (!paragraph.length) {
+      process.stderr.write(`warning: unrecognized markdown line ${index + 1}: ${line.slice(0, 80)}\n`);
+      index += 1;
+      continue;
+    }
     out.push(`<p>${inline(paragraph.join(' '))}</p>`);
   }
 
@@ -353,7 +363,7 @@ function template(page, body) {
   </aside>
   <main class="content">
     <article class="page">
-      <div class="page-meta">${page.group} · 协议 1.0 · v0.8.0</div>
+      <div class="page-meta">${page.group} · 协议 1.1 · v0.8.1</div>
       ${body}
       ${pager(page.file)}
     </article>

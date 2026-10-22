@@ -49,7 +49,7 @@ export interface LiveBackendDeps {
   hub: SessionEventHub;
   log: Logger;
   /** Cordis event subscription; handlers receive every argument the emitter passes. */
-  on(event: string, handler: (...args: unknown[]) => void): () => void;
+  on(event: string, handler: (...args: unknown[]) => unknown): () => void;
 }
 
 const MAX_MENTION_FILES = 10;
@@ -91,6 +91,16 @@ export class LiveBackend implements SessionBackend {
   private readonly userCancelled = new Set<string>();
   private readonly selections = new Map<string, ModelSelectionRef>();
   private readonly disposers: Array<() => void> = [];
+  /**
+   * Live sub-agents per owning conversation.
+   *
+   * The harness reports sub-agents as ordinary agents with their own session;
+   * keeping the handles is what makes stopping *one* of them possible instead
+   * of only ending the whole turn.
+   */
+  private readonly children = new Map<string, Map<string, LiveAgent>>();
+  /** Tool calls that started but have not reported a result yet. */
+  private readonly openCalls = new Map<string, Set<string>>();
 
   private createUser: CreateUserMessage | undefined;
   private installSelection: InstallModelSelection | undefined;
@@ -185,14 +195,60 @@ export class LiveBackend implements SessionBackend {
   }
 
   async cancel(sessionId: string): Promise<void> {
-    const agent = this.live.get(sessionId);
-    if (!agent) return;
     this.userCancelled.add(sessionId);
+
+    // Sub-agents run their own turns; cancelling the root alone leaves them
+    // working and their tool cards spinning forever.
+    const children = this.children.get(sessionId);
+    this.children.delete(sessionId);
+    if (children) {
+      for (const child of children.values()) {
+        try {
+          child.cancel({ kind: 'user' });
+        } catch {
+          // Already idle.
+        }
+      }
+    }
+
+    const agent = this.live.get(sessionId);
     try {
-      agent.cancel({ kind: 'user' });
+      agent?.cancel({ kind: 'user' });
     } catch {
       // Cancelling an idle agent is a no-op.
     }
+
+    this.interruptTools(sessionId);
+    if (agent) this.flushTurnText(sessionId, agent);
+  }
+
+  /** Stops one sub-agent; the root turn keeps running. */
+  cancelAgent(sessionId: string, agentId: string): boolean {
+    if (agentId === 'root') {
+      void this.cancel(sessionId);
+      return true;
+    }
+
+    const target = this.children.get(sessionId)?.get(agentId);
+    if (!target) return false;
+    try {
+      target.cancel({ kind: 'user' });
+    } catch {
+      return false;
+    }
+    this.children.get(sessionId)?.delete(agentId);
+    return true;
+  }
+
+  /** Maps a harness agent to the conversation that owns it. */
+  sessionIdOfAgent(agent: unknown): string | undefined {
+    if (!agent) return undefined;
+    return this.ownerSessionOf(agent as LiveAgent);
+  }
+
+  /** Makes a session addressable by the harness (create or resume its agent). */
+  async ensureLive(sessionId: string): Promise<boolean> {
+    return Boolean(await this.ensureAgent(sessionId));
   }
 
   async listExtraSessionIds(): Promise<string[]> {
@@ -303,6 +359,7 @@ export class LiveBackend implements SessionBackend {
     if (!id) return;
 
     const result = extractText(message);
+    this.openCalls.get(owner)?.delete(id);
     this.deps.hub.emit(owner, 'tool.result', {
       tool: {
         id,
@@ -332,6 +389,7 @@ export class LiveBackend implements SessionBackend {
 
     const sessionId = this.ownerSessionOf(agent);
     if (!sessionId) return;
+    this.rememberAgent(sessionId, agent);
     const streamKey = this.streamKey(sessionId, agent);
     const chunk = frame.chunk;
 
@@ -362,6 +420,7 @@ export class LiveBackend implements SessionBackend {
         } catch {
           // Arguments arrive in fragments; the raw string is shown meanwhile.
         }
+        this.trackCall(sessionId, id);
         this.deps.hub.emit(sessionId, 'tool.call', {
           tool: { id, name, args, status: 'running' },
           agent: this.refOf(agent),
@@ -387,11 +446,15 @@ export class LiveBackend implements SessionBackend {
 
     const sessionId = this.ownerSessionOf(agent);
     if (!sessionId) return;
+    this.rememberAgent(sessionId, agent);
 
     const status = this.terminalStatusOf(sessionId, parsed.status ?? agent.status);
     this.deps.hub.emit(sessionId, 'agent.status', { agent: { ...this.refOf(agent), status } });
 
-    if (status === 'success' || status === 'cancelled') this.flushTurnText(sessionId, agent);
+    if (status === 'success' || status === 'cancelled') {
+      this.flushTurnText(sessionId, agent);
+      this.releaseAgent(sessionId, agent);
+    }
   }
 
   private onError(payload: unknown): void {
@@ -413,6 +476,13 @@ export class LiveBackend implements SessionBackend {
 
     const sessionId = this.ownerSessionOf(agent);
     if (!sessionId) return;
+
+    // Resuming a conversation root also emits `agent/created`; announcing it as
+    // a sub-agent would inject a bogus system note into the transcript.
+    if (type === 'agent.spawn' && this.refOf(agent).id === 'root') return;
+
+    if (type === 'agent.spawn') this.rememberAgent(sessionId, agent);
+    else this.releaseAgent(sessionId, agent);
 
     const mapped =
       type === 'agent.spawn'
@@ -448,6 +518,58 @@ export class LiveBackend implements SessionBackend {
   }
 
   /* ------------------------------ internals ------------------------------ */
+
+  /** Registers a sub-agent handle so it can be stopped on its own. */
+  private rememberAgent(sessionId: string, agent: LiveAgent): void {
+    const ref = this.refOf(agent);
+    if (ref.id === 'root') return;
+    let owned = this.children.get(sessionId);
+    if (!owned) {
+      owned = new Map();
+      this.children.set(sessionId, owned);
+    }
+    owned.set(ref.id, agent);
+  }
+
+  private releaseAgent(sessionId: string, agent: LiveAgent): void {
+    const id = this.refOf(agent).id;
+    if (id === 'root') return;
+    const owned = this.children.get(sessionId);
+    if (!owned) return;
+    owned.delete(id);
+    if (!owned.size) this.children.delete(sessionId);
+  }
+
+  private trackCall(sessionId: string, callId: string): void {
+    let calls = this.openCalls.get(sessionId);
+    if (!calls) {
+      calls = new Set();
+      this.openCalls.set(sessionId, calls);
+    }
+    calls.add(callId);
+  }
+
+  /**
+   * Closes every in-flight tool call after a cancel.
+   *
+   * The harness never reports a result for an interrupted call, so without
+   * this the transcript keeps those cards on "(running)" indefinitely.
+   */
+  private interruptTools(sessionId: string): void {
+    const calls = this.openCalls.get(sessionId);
+    this.openCalls.delete(sessionId);
+    for (const key of [...this.toolArgs.keys()]) {
+      if (key.startsWith(`${sessionId}:`)) this.toolArgs.delete(key);
+    }
+    if (!calls?.size) return;
+
+    for (const id of calls) {
+      this.deps.hub.emit(sessionId, 'tool.result', {
+        tool: { id, name: '', args: undefined, status: 'cancelled', result: 'interrupted by user' },
+        agent: { id: 'root' },
+      });
+    }
+  }
 
   private async ensureAgent(sessionId: string): Promise<LiveAgent | undefined> {
     const existing = this.live.get(sessionId);

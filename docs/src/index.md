@@ -42,7 +42,7 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"system.info"}' | dsh --profile 
 npm install
 npm run build
 cd extension && npm run package
-code --install-extension conduit4dsh2vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.1.vsix
 ```
 
 也可以在 VS Code 中执行 `DSH: Connect`，扩展会自动探测 CLI（配置路径 → PATH → npx）。
@@ -53,7 +53,7 @@ code --install-extension conduit4dsh2vscode-0.8.0.vsix
 | --- | --- | --- |
 | `dsh.transport` | `stdio` | `stdio` / `tcp` / `unix` |
 | `dsh.profile` | `rpc` | 连接使用的 profile |
-| `dsh.permissionMode` | `workspace-write` | 沙箱级别，经 `DSH_PERMISSION_MODE` 传入 |
+| `dsh.permissionMode` | `workspace-write` | 新会话的初始沙箱级别；运行中在对话标题栏切换 |
 | `dsh.enableLiveAgentLoop` | `true` | 关闭后回放本地记录，不调用模型 |
 | `dsh.providerConfig` | `{}` | 声明式供应商配置，连接后自动同步 |
 | `dsh.changes.exclude` | 构建产物等 | 变更跟踪忽略的 glob |

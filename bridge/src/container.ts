@@ -5,6 +5,7 @@ import type { PluginEventParams } from '@conduit4dsh2vscode/protocol';
 import type { BridgeConfig } from './config';
 import { AgentRegistry } from './core/agent-registry';
 import { ModelService } from './core/model-service';
+import { PermissionService } from './core/permission-service';
 import { ProjectService } from './core/project-service';
 import { SessionService } from './core/session-service';
 import { SessionMetaStore } from './core/session-store';
@@ -35,6 +36,7 @@ export class BridgeRuntime {
     private readonly models: ModelService,
     private readonly live: LiveBackend | undefined,
     private readonly plugins: PluginAdmin,
+    private readonly permissions: PermissionService,
     private readonly config: BridgeConfig,
   ) {}
 
@@ -79,6 +81,14 @@ export class BridgeRuntime {
     const plugins = new PluginAdmin(harness, log);
     plugins.subscribe();
 
+    const permissions = new PermissionService({
+      harness,
+      log,
+      sessionIdOfAgent: (agent) => live?.sessionIdOfAgent(agent),
+      ensureSession: (sessionId) => live?.ensureLive(sessionId) ?? Promise.resolve(false),
+    });
+    permissions.install();
+
     const roots = (): string[] => {
       const all = new Set<string>([process.cwd()]);
       for (const project of projects.list()) all.add(project.path);
@@ -98,6 +108,7 @@ export class BridgeRuntime {
         files,
         settings,
         plugins,
+        permissions,
         system: {
           dshVersion: readDshVersion(home),
           profile: process.env.DSH_PROFILE ?? 'rpc',
@@ -116,6 +127,10 @@ export class BridgeRuntime {
           hub.onStatus((sessionId, status) => publish('session.status', { sessionId, status }, sessionId)),
           hub.onAgent((sessionId, agent) => publish('agent.event', { sessionId, agent }, sessionId)),
           plugins.onEvent((params: PluginEventParams) => publish('plugin.event', params)),
+          permissions.onChanged((event) => publish('permission.changed', event, event.sessionId)),
+          // Approvals are a client-wide duty, not a per-session stream: a closed
+          // panel must not swallow the question. Broadcast without a session id.
+          permissions.onAsk((ask) => publish('approval.request', ask)),
         ];
         modelListeners.add((info) => publish('model.changed', info));
         disposes.push(() => modelListeners.clear());
@@ -136,7 +151,7 @@ export class BridgeRuntime {
       log,
     );
 
-    const runtime = new BridgeRuntime(server, models, live, plugins, config);
+    const runtime = new BridgeRuntime(server, models, live, plugins, permissions, config);
     lifecycle.shutdown = () => runtime.shutdown();
 
     // Optional debug handle. cordis requires `provide` before `set`, and some
@@ -163,6 +178,7 @@ export class BridgeRuntime {
 
   stop(): void {
     this.server.stop();
+    this.permissions.dispose();
     this.live?.dispose();
     this.plugins.dispose();
   }

@@ -47,9 +47,10 @@ flowchart LR
 
 | Area | What you get |
 | --- | --- |
-| Sessions | Create, rename, archive, delete, paged history, cancel the current turn |
+| Sessions | Create, rename, archive, delete, paged history, stop the current turn (`Esc`) |
 | Models | Provider management, hosted credentials, default model, per-session model and reasoning effort |
-| Multi-agent | Sub-agent tree with status, duration, tool counts, rendered per agent |
+| Permissions | Sandbox presets per session (`read-only` / `workspace-write` / `danger-full-access`) and modal approval prompts for actions that leave the sandbox |
+| Multi-agent | Sub-agent tree with status, duration, tool counts, rendered per agent; stop one sub-agent or the whole turn |
 | Files | Workspace listing and reading with escape checks, `@` mentions sent with the message |
 | Changes | Diff against the last confirmation, per-file review, revert, advance the baseline |
 | Plugins | List, search, install, enable/disable, uninstall dsh bundles |
@@ -71,7 +72,7 @@ dsh plugin --profile rpc add "$(pwd)/bridge"
 
 # build and install the extension
 cd extension && npm run package
-code --install-extension conduit4dsh2vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.1.vsix
 ```
 
 Open a folder, then click **DSH** in the status bar or run `DSH: Connect`.
@@ -79,8 +80,8 @@ Open a folder, then click **DSH** in the status bar or run `DSH: Connect`.
 Under Remote-SSH the extension must live in the **remote** extension host:
 
 ```bash
-scp extension/conduit4dsh2vscode-0.8.0.vsix user@host:/tmp/
-ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.0.vsix'
+scp extension/conduit4dsh2vscode-0.8.1.vsix user@host:/tmp/
+ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.1.vsix'
 ```
 
 Or use the helper: `bash deploy/setup.sh --remote user@host`.
@@ -192,9 +193,10 @@ flowchart LR
 
 | 领域 | 能力 |
 | --- | --- |
-| 会话 | 创建、重命名、归档、删除、历史分页、取消当前轮次 |
+| 会话 | 创建、重命名、归档、删除、历史分页、终止当前轮次（`Esc`） |
 | 模型 | 供应商管理、密钥托管、默认模型、会话内模型与思考强度切换 |
-| 多 agent | 子 agent 树、状态、耗时、工具计数、按 agent 分组渲染 |
+| 权限 | 会话级沙箱预设（`read-only` / `workspace-write` / `danger-full-access`），越界动作弹出审批框，仅授权一次 |
+| 多 agent | 子 agent 树、状态、耗时、工具计数、按 agent 分组渲染；可单独终止某个子 agent 或整轮 |
 | 文件 | 工作区列举/读取（越界校验）、`@` 提及随消息投递 |
 | 变更 | 以“上次确认”为基线的 diff，逐文件查看、还原、推进基线 |
 | 插件 | 列出、搜索、安装、启停、卸载 dsh bundle |
@@ -216,7 +218,7 @@ dsh plugin --profile rpc add "$(pwd)/bridge"
 
 # 构建并安装扩展
 cd extension && npm run package
-code --install-extension conduit4dsh2vscode-0.8.0.vsix
+code --install-extension conduit4dsh2vscode-0.8.1.vsix
 ```
 
 打开一个文件夹，点击状态栏的 **DSH**，或在命令面板执行 `DSH: Connect`。
@@ -224,8 +226,8 @@ code --install-extension conduit4dsh2vscode-0.8.0.vsix
 远端（Remote-SSH）场景下，扩展必须装在**远端**扩展宿主：
 
 ```bash
-scp extension/conduit4dsh2vscode-0.8.0.vsix user@host:/tmp/
-ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.0.vsix'
+scp extension/conduit4dsh2vscode-0.8.1.vsix user@host:/tmp/
+ssh user@host 'code-server --install-extension /tmp/conduit4dsh2vscode-0.8.1.vsix'
 ```
 
 或使用脚本：`bash deploy/setup.sh --remote user@host`。

@@ -1,18 +1,20 @@
 <script setup lang="ts">
   import { computed } from 'vue';
-  import type { ProviderInfo } from '../types';
+  import type { PermissionState, ProviderInfo } from '../types';
 
   const props = defineProps<{
     title: string;
     providers: ProviderInfo[];
     modelId: string;
     effort: string;
+    permission: PermissionState;
     changeTotal: number;
     confirmedAt: string;
   }>();
 
   const emit = defineEmits<{
     (event: 'setModel', payload: { modelId: string; effort?: string }): void;
+    (event: 'setPermission', preset: string): void;
     (event: 'confirmChanges'): void;
     (event: 'compareCode'): void;
     (event: 'collapseAll'): void;
@@ -45,6 +47,19 @@
       : 'Review and confirm changes since the last confirmation',
   );
 
+  // The harness may report a derived `custom` state that is not selectable; it
+  // labels the control but never appears as an option.
+  const permissionLabel = computed(() => {
+    const current = props.permission.preset ?? 'unknown';
+    const parts = [`Permission: ${current}`];
+    if (props.permission.sandbox) parts.push(`sandbox: ${props.permission.sandbox}`);
+    if (props.permission.approval) parts.push(`approval: ${props.permission.approval}`);
+    parts.push('Changes apply to this session immediately');
+    return parts.join('\n');
+  });
+
+  const permissionDanger = computed(() => props.permission.preset === 'danger-full-access');
+
   function onModel(event: Event): void {
     emit('setModel', { modelId: (event.target as HTMLSelectElement).value });
   }
@@ -52,6 +67,11 @@
   function onEffort(event: Event): void {
     // Only the effort changes; the model id stays as-is.
     emit('setModel', { modelId: props.modelId, effort: (event.target as HTMLSelectElement).value });
+  }
+
+  function onPermission(event: Event): void {
+    const preset = (event.target as HTMLSelectElement).value;
+    if (preset) emit('setPermission', preset);
   }
 </script>
 
@@ -85,6 +105,23 @@
 
     <select class="effort-picker" :value="effort" title="Reasoning effort" @change="onEffort">
       <option v-for="option in EFFORTS" :key="option.value" :value="option.value">{{ option.label }}</option>
+    </select>
+
+    <select
+      v-if="permission.available && permission.options.length"
+      class="permission-picker"
+      :class="{ 'permission-danger': permissionDanger }"
+      :value="permission.preset ?? ''"
+      :title="permissionLabel"
+      @change="onPermission"
+    >
+      <option v-if="!permission.preset" value="" disabled>Permission: unknown</option>
+      <option v-else-if="!permission.options.some((option) => option.value === permission.preset)" :value="permission.preset" disabled>
+        Permission: {{ permission.preset }} (custom)
+      </option>
+      <option v-for="option in permission.options" :key="option.value" :value="option.value">
+        {{ option.name }}
+      </option>
     </select>
 
     <button type="button" class="btn btn-warn" :title="changeTitle" @click="emit('confirmChanges')">

@@ -245,3 +245,39 @@ export interface PluginEventParams {
   log?: PluginInstallLog;
   reason?: 'plugin' | 'bundle' | 'install' | 'remove';
 }
+
+/* ------------------------------ permissions ------------------------------ */
+
+/** One selectable permission preset, as published by the harness catalog. */
+export interface PermissionPresetOption {
+  /** Stable preset key, also accepted by `permission.set`. */
+  value: string;
+  /** Display label. */
+  name: string;
+  /** One sentence on what the preset allows. */
+  description?: string;
+}
+
+/**
+ * Session permission state.
+ *
+ * `available` is false when the harness composes no permission service (an
+ * older profile, or the replay backend); clients hide the control instead of
+ * offering a selector that cannot be applied.
+ */
+export interface PermissionState {
+  available: boolean;
+  /** Selectable presets in catalog order. */
+  options: PermissionPresetOption[];
+  /** The session's effective value: a preset key or the derived `custom`. */
+  preset?: string;
+  /** Preset applied to future sessions. */
+  defaultPreset?: string;
+  /** Sandbox knob behind the effective preset, when resolvable. */
+  sandbox?: string;
+  /** Approval policy behind the effective preset, when resolvable. */
+  approval?: string;
+}
+
+/** A decision forwarded to the harness approval answerer. */
+export type ApprovalOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable';

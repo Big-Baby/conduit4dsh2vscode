@@ -4,7 +4,53 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.1] - 2026-10-22
+
+### Added
+
+- **Permission management.** The chat header and the status bar now expose the
+  harness permission presets (`read-only`, `workspace-write`,
+  `danger-full-access`). Switching is applied to the live session immediately
+  through `dsh-permission-presets`, which moves the sandbox mode and the
+  approval policy together; no restart and no new turn is needed. New RPC
+  methods: `permission.get` and `permission.set`; new notification
+  `permission.changed`.
+- **Approval prompts.** The bridge now answers the harness
+  `approval/request` waterfall. A tool action that needs to leave the sandbox
+  raises a modal in the editor with *Allow once* / *Deny*; the grant is
+  one-shot and nothing is remembered. Unanswered questions fail closed: after
+  five minutes, or when no client is attached, the tool action is denied rather
+  than allowed. New RPC method: `approval.respond`; new notification
+  `approval.request`.
+- **Real sub-agent termination.** `agent.cancel` used to rewrite the registry
+  and emit an event while the harness agent kept running. Live sub-agent handles
+  are now tracked per conversation, so stopping one actually stops it; stopping
+  the turn cancels the root *and* every live sub-agent.
+- Commands `DSH: Set Permission` and `DSH: Show Permission Details`; `Esc` in the
+  transcript stops the running turn; each running sub-agent has its own *Stop*
+  button; the chat header shows the active preset next to the model picker.
+
+### Fixed
+
+- Stopping a turn left every in-flight tool card on `(running)` forever: the
+  harness never reports a result for an interrupted call. Interrupted calls are
+  now closed as `cancelled`, both in the bridge and in the transcript.
+- A client closing `stdin` while a notification was in flight crashed the bridge
+  with an unhandled `EPIPE`.
+- Resuming a conversation emitted a bogus `sub-agent … started` system note,
+  because `agent/created` fires for the conversation root as well.
+- `session.cancel` marked the root agent `cancelled` in the registry, which
+  misreported the session as cancelled after the next turn had started.
+
+### Changed
+
+- Protocol 1.1 (major unchanged): adds `permission-management`,
+  `approval-prompts` and `subagent-cancel` capabilities. A 1.0 bridge omits
+  them and the client hides the affected controls instead of failing.
+- The permission control is hidden when the harness composes no permission
+  service, and the status bar hides when no session is open.
+
+## [0.8.0] - 2026-10-18
 
 ### Fixed
 

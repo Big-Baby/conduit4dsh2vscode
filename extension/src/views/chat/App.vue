@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, nextTick, onMounted, ref, watch } from 'vue';
+  import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
   import AgentGroup from './components/AgentGroup.vue';
   import ChatHeader from './components/ChatHeader.vue';
   import Composer from './components/Composer.vue';
@@ -98,8 +98,24 @@
 
   onMounted(() => {
     applyPreferences();
+    window.addEventListener('keydown', onGlobalKeydown);
     post({ type: 'ready' });
   });
+
+  onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown));
+
+  /**
+   * Esc stops the running turn.
+   *
+   * The mention popup owns Esc while it is open, so the two never fire
+   * together. Stopping is idempotent: the host cancels an idle session as a
+   * no-op.
+   */
+  function onGlobalKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !state.running || state.mention.open) return;
+    event.preventDefault();
+    post({ type: 'stop' });
+  }
 
   onMessage((message: InboundMessage) => {
     if (message.type === 'theme') {
@@ -162,6 +178,12 @@
     });
   }
 
+  /** The preset is applied by the harness; reflect it immediately, then confirm. */
+  function onSetPermission(preset: string): void {
+    state.permission = { ...state.permission, preset };
+    post({ type: 'setPermission', preset });
+  }
+
   function onToggle(card: ChatCard): void {
     toggleCard(card);
   }
@@ -173,9 +195,11 @@
     :providers="state.providers"
     :model-id="state.modelId"
     :effort="state.effort"
+    :permission="state.permission"
     :change-total="state.changes.total"
     :confirmed-at="state.changes.confirmedAt"
     @set-model="onSetModel"
+    @set-permission="onSetPermission"
     @confirm-changes="post({ type: 'confirmChanges' })"
     @compare-code="post({ type: 'compareCode' })"
     @collapse-all="post({ type: 'collapseAll', collapsed: true })"
@@ -241,6 +265,7 @@
       :show-timestamps="state.prefs.showTimestamps"
       @copy="post({ type: 'copy', text: $event })"
       @toggle="onToggle"
+      @cancel="post({ type: 'cancelAgent', agentId: $event })"
     />
   </div>
 

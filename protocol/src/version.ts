@@ -3,8 +3,11 @@
  *
  * The version only changes when the contract changes; both sides exchange it
  * during `system.info` and compare the major field.
+ *
+ * 1.1 adds permission presets and the approval answerer seam. A 1.0 bridge
+ * simply omits the capabilities, so clients degrade instead of failing.
  */
-export const PROTOCOL_VERSION = '1.0';
+export const PROTOCOL_VERSION = '1.1';
 
 /** Features a peer may rely on. Absence means "degrade", never "fail". */
 export const CAPABILITIES = [
@@ -14,6 +17,9 @@ export const CAPABILITIES = [
   'file-mentions',
   'history-paging',
   'session-model-selection',
+  'permission-management',
+  'approval-prompts',
+  'subagent-cancel',
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];

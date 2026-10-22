@@ -3,6 +3,7 @@ import { registerAgentCommands } from './agentCommands';
 import { registerChangeCommands } from './changeCommands';
 import type { CommandContext } from './context';
 import { registerModelCommands } from './modelCommands';
+import { registerPermissionCommands } from './permissionCommands';
 import { registerPluginCommands } from './pluginCommands';
 import { registerSessionCommands } from './sessionCommands';
 import { registerSetupCommands } from './setupCommands';
@@ -16,6 +17,7 @@ export function registerCommands(
   registerSessionCommands(context, subscriptions);
   registerModelCommands(context, subscriptions);
   registerAgentCommands(context, subscriptions);
+  registerPermissionCommands(context, subscriptions);
   registerChangeCommands(context, subscriptions);
   registerPluginCommands(context, subscriptions);
 }

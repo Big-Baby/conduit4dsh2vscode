@@ -146,6 +146,44 @@ harness 升级时改动局限在这一层。
 用户主动取消后，harness 会把状态置回 idle，不会单独报 cancelled。网关记录取消
 意图，在终止事件到达时改写为 `cancelled`，避免界面误报“已完成”。
 
+## 权限与审批
+
+网关适配两个 harness 服务：
+
+| harness 服务 | 网关中的职责 |
+| --- | --- |
+| `permissionPresets` | 读取预设目录、按会话读写当前预设（`permission.*`） |
+| `approval` + `approval/request` | 注册唯一的审批回答者，把问题转发给编辑器 |
+
+预设把沙箱模式与审批策略打包，`permission.set` 直接调用
+`permissionPresets.set(session, name)`，由 harness 自己写入两个 knob，
+因此切换对**当前会话立即生效**，不重启进程、不新建 agent。若会话只存在
+元数据里（从未 resume），网关先 `ensureLive()` 再应用，否则没有可寻址对象。
+
+审批是关键路径：`approval/request` 是 cordis 瀑布，谁先返回谁说了算，没有
+回答者就会 `unavailable`（失败关闭）。网关在激活期只做订阅、不写任何 dsh
+配置，把问题挂起到 `approval.respond`，并有三道兜底：
+
+1. 5 分钟超时 → `cancelled`，工具动作不执行；
+2. 请求被撤销（turn 结束）→ 监听 `AbortSignal`，同样 `cancelled`；
+3. 没有客户端连接 → 直接 `unavailable`。
+
+`allowed-once` 只对本次调用有效，不做任何记忆。
+
+## 终止链路
+
+`session.cancel` 依次做四件事：
+
+1. 取消该会话登记的全部子 agent（它们跑在自己的 session 里）；
+2. 取消根 agent；
+3. 把仍在进行中的工具调用补成 `cancelled` 结果——harness 不会为被中断的
+   调用补发 `tool/result`，不补就会永远停在 running；
+4. 冲刷本轮流式文本，然后置 `idle`。
+
+`agent.cancel(agentId≠root)` 只停那一个子 agent。句柄来自 `agent/created`
+与流事件中出现的子 agent，因此只能取消**本进程内见过**的 agent；未知 id
+返回 `-32602` 而不是静默成功。
+
 ## 限制
 
 - `session.fork` 仅在 replay 后端可用；

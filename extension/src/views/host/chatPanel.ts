@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import {
   type AgentNode,
   type DefaultModelSelection,
+  type PermissionState,
   type ProviderInfo,
   type SessionEvent,
   type SessionInfo,
@@ -10,6 +11,7 @@ import type { DshClient } from '../../rpc/client';
 import type { AgentService } from '../../core/agent-service';
 import type { ConnectionService } from '../../core/connection';
 import type { ModelService } from '../../core/model-service';
+import type { PermissionService } from '../../core/permission-service';
 import type { SessionService } from '../../core/session-service';
 import { buildPalette, buildPreferences } from '../theme/palette';
 import type { OutboundMessage } from '../chat/types';
@@ -20,6 +22,7 @@ export interface ChatPanelServices {
   sessions: SessionService;
   models: ModelService;
   agents: AgentService;
+  permissions: PermissionService;
 }
 
 export interface ChatPanelCallbacks {
@@ -114,6 +117,11 @@ export class ChatPanel {
     for (const panel of ChatPanel.panels.values()) panel.post({ type: 'agent', agent });
   }
 
+  /** Pushes a permission snapshot to every open transcript. */
+  static postPermissionAll(permission: PermissionState): void {
+    for (const panel of ChatPanel.panels.values()) panel.post({ type: 'permission', permission });
+  }
+
   private readonly disposables: vscode.Disposable[] = [];
   private clientBindings: vscode.Disposable[] = [];
   private session: SessionInfo;
@@ -191,13 +199,21 @@ export class ChatPanel {
         if (sessionId !== this.session.id) return;
         this.post({ type: 'agent', agent });
       }),
+      client.on('permission.changed', (params) => {
+        const { sessionId } = params as { sessionId?: string };
+        if (sessionId && sessionId !== this.session.id) return;
+        void this.services.permissions
+          .get(this.session.id)
+          .then((permission) => this.post({ type: 'permission', permission }))
+          .catch(() => undefined);
+      }),
     );
   }
 
   /** Reloads the snapshot; used by reconnect and external session changes. */
   async loadSnapshot(): Promise<void> {
     try {
-      const [detail, providers, selection, agents, info] = await Promise.all([
+      const [detail, providers, selection, agents, info, permission] = await Promise.all([
         this.services.sessions.get(this.session.id),
         this.services.models.providers().catch(() => [] as ProviderInfo[]),
         this.services.models.getDefault().catch((): DefaultModelSelection => ({})),
@@ -206,6 +222,9 @@ export class ChatPanel {
           .requireClient()
           .request<{ mode?: 'live' | 'replay' }>('system.info')
           .catch((): { mode?: 'live' | 'replay' } => ({})),
+        this.services.permissions
+          .get(this.session.id)
+          .catch((): PermissionState => ({ available: false, options: [] })),
       ]);
 
       this.session = detail.session;
@@ -226,6 +245,7 @@ export class ChatPanel {
         agents,
         hasMoreHistory: this.hasMoreHistory,
         historyTotal: this.historyTotal,
+        permission,
       });
       this.post({ type: 'theme', palette: buildPalette() });
       this.post({ type: 'prefs', prefs: buildPreferences() });
@@ -297,6 +317,23 @@ export class ChatPanel {
           await this.services.sessions.cancel(this.session.id);
         } finally {
           this.setRunning(false);
+        }
+        break;
+
+      case 'cancelAgent':
+        try {
+          await this.services.agents.cancel(this.session.id, message.agentId);
+        } catch (error) {
+          this.post({ type: 'error', message: (error as Error).message });
+        }
+        break;
+
+      case 'setPermission':
+        try {
+          const permission = await this.services.permissions.set(this.session.id, message.preset);
+          this.post({ type: 'permission', permission });
+        } catch (error) {
+          this.post({ type: 'error', message: (error as Error).message });
         }
         break;
 

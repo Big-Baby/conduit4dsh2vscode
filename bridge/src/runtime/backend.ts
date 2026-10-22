@@ -31,6 +31,15 @@ export interface SessionBackend {
 
   cancel(sessionId: string): Promise<void>;
 
+  /**
+   * Stops one sub-agent without ending the turn.
+   *
+   * Returns false when the backend cannot address the agent (replay, or an
+   * agent that already finished), so the caller can report the truth instead
+   * of marking a live agent as cancelled.
+   */
+  cancelAgent?(sessionId: string, agentId: string): boolean;
+
   /** Sessions that exist in the source but have no bridge metadata yet. */
   listExtraSessionIds?(): Promise<string[]>;
 
